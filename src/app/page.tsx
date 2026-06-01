@@ -317,8 +317,6 @@ function CardDetailSheet({ card, onClose }: { card: CardData; onClose: () => voi
   const artSrc = getArtSrc(card);
   const isGenesis = card.metodo_invocacion === "GENESIS";
   const typeLine = getTypeLine(card);
-  const metodoInfo = METODO_INFO[card.metodo_invocacion];
-  const atributoInfo = ATRIBUTO_INFO[card.atributo];
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center safe-bottom" onClick={onClose}>
@@ -338,22 +336,12 @@ function CardDetailSheet({ card, onClose }: { card: CardData; onClose: () => voi
           )}
         </div>
 
-        {/* Top overlay - badge + name + type line + ATK */}
-        <div className={`absolute inset-x-0 top-0 ${isGenesis ? 'h-20' : 'h-16'} bg-gradient-to-b from-black/80 to-transparent flex flex-col justify-end pb-1.5 px-3 rounded-t-xl`}>
-          <div className="flex items-center gap-1.5">
-            <span className={`text-[0.55rem] font-bold px-1.5 py-0.5 rounded ${atributoInfo.border} ${atributoInfo.textColor} border`}>
-              {atributoInfo.label}
-            </span>
-            {card.metodo_invocacion !== "NORMAL" && (
-              <span className={`text-[0.5rem] font-bold px-1.5 py-0.5 rounded ${metodoInfo.badge} border`}>
-                {metodoInfo.emoji} {metodoInfo.label}
-              </span>
-            )}
-          </div>
-          <h3 className={`font-bold text-white drop-shadow-[0_2px_3px_rgba(0,0,0,0.9)] leading-tight ${isGenesis ? 'text-lg mt-1 text-purple-100' : 'text-base mt-0.5'}`}>{card.name}</h3>
-          <div className="flex items-center gap-2 mt-0.5">
-            <span className="text-[0.6rem] text-zinc-400 font-semibold">{typeLine}</span>
-            <span className="text-sm font-bold text-amber-400 drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)]">⚔ {card.atk}</span>
+        {/* Top overlay - name + type line + ATK */}
+        <div className={`absolute inset-x-0 top-0 ${isGenesis ? 'h-24' : 'h-20'} bg-gradient-to-b from-black/85 via-black/50 to-transparent flex flex-col justify-end pb-2 px-4 rounded-t-xl`}>
+          <h3 className={`font-bold text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.95)] leading-tight ${isGenesis ? 'text-xl text-purple-100' : 'text-lg'}`}>{card.name}</h3>
+          <div className="flex items-center gap-2 mt-1">
+            <span className="text-sm text-zinc-100 font-bold drop-shadow-[0_1px_3px_rgba(0,0,0,0.9)] bg-black/40 px-1.5 py-0.5 rounded">{typeLine}</span>
+            <span className="text-sm font-bold text-amber-400 drop-shadow-[0_1px_3px_rgba(0,0,0,0.9)] bg-black/40 px-1.5 py-0.5 rounded">⚔ {card.atk}</span>
           </div>
         </div>
 
@@ -666,7 +654,7 @@ function DeckEditor({ onDone }: { onDone: (deck: CardData[]) => void }) {
         <div className="grid grid-cols-4 sm:grid-cols-5 gap-1.5">
           {filtered.map((card, i) => {
             const copies = copyCount(card.name);
-            const info = CARD_TYPE_INFO[card.type];
+            const frame = getCardFrameClasses(card);
             const artSrc = getArtSrc(card);
             const full = copies >= MAX_COPIES;
             const deckFull = !canAdd;
@@ -677,7 +665,7 @@ function DeckEditor({ onDone }: { onDone: (deck: CardData[]) => void }) {
                   if (full || deckFull) { setDetailCard(card); return; }
                   addCard(card);
                 }}
-                className={`relative rounded-lg overflow-hidden cursor-pointer border-2 transition-all ${info.border} ${
+                className={`relative rounded-lg overflow-hidden cursor-pointer border-2 transition-all ${frame.border} ${frame.extraClass} ${
                   copies > 0 ? "ring-1 ring-amber-400/70" : ""
                 } ${
                   full && deckFull ? "opacity-40" : full ? "opacity-60" : "hover:scale-[1.06] active:scale-95"
@@ -688,7 +676,7 @@ function DeckEditor({ onDone }: { onDone: (deck: CardData[]) => void }) {
                   {artSrc ? (
                     <img src={artSrc} alt={card.name} className="w-full h-full object-cover object-top" />
                   ) : (
-                    <div className={`w-full h-full bg-gradient-to-br ${info.gradient}`} />
+                    <div className={`w-full h-full bg-gradient-to-br ${frame.gradient}`} />
                   )}
                   {/* Copy count badge */}
                   {copies > 0 && (
@@ -736,18 +724,18 @@ function DeckEditor({ onDone }: { onDone: (deck: CardData[]) => void }) {
             </span>
           ) : (
             deck.map((card, idx) => {
-              const info = CARD_TYPE_INFO[card.type];
+              const frame = getCardFrameClasses(card);
               const artSrc = getArtSrc(card);
               return (
                 <div
                   key={`${card.name}-${idx}`}
                   onClick={() => removeCard(idx)}
-                  className="relative w-12 h-[68px] shrink-0 rounded border border-zinc-600 overflow-hidden cursor-pointer group transition-all active:border-red-500 active:opacity-80"
+                  className={`relative w-12 h-[68px] shrink-0 rounded border-2 ${frame.border} overflow-hidden cursor-pointer group transition-all active:border-red-500 active:opacity-80`}
                 >
                   {artSrc ? (
                     <img src={artSrc} alt={card.name} className="w-full h-full object-cover object-top" />
                   ) : (
-                    <div className={`w-full h-full bg-gradient-to-br ${info.gradient}`} />
+                    <div className={`w-full h-full bg-gradient-to-br ${frame.gradient}`} />
                   )}
                   {/* Remove indicator — always visible on touch */}
                   <div className="absolute inset-0 bg-red-600/10 group-active:bg-red-600/40 transition-colors flex items-center justify-center">
