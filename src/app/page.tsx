@@ -150,10 +150,13 @@ function getTargetInfo(slotId: SlotId, card: CardData | null, board: Record<Slot
   }
   // Column 2: SOLO Eclipse y Genesis — ningún otro tipo puede ir ahí
   if (slotId === "p-mon-2") return { valid: false, type: "place" };
-  // Solo slots de monstruo (p-mon-1, p-mon-3) aceptan invocación normal
-  // Los altares (p-altar-luz, p-altar-sombra) y artefacto (p-artifact) NO aceptan monstruos directamente
-  if (slotId !== "p-mon-1" && slotId !== "p-mon-3") return { valid: false, type: "place" };
-  // Normal summon limit
+  // Slots válidos para invocación normal: zonas de monstruo (1,3) y altares (luz, sombra)
+  // Todas las cartas son híbridas — pueden ir como monstruo o como altar
+  const validNormalSlots = ["p-mon-1", "p-mon-3", "p-altar-luz", "p-altar-sombra"];
+  if (!validNormalSlots.includes(slotId)) return { valid: false, type: "place" };
+  // Slot ocupado — no se puede colocar ahí
+  if (board[slotId as SlotId]) return { valid: false, type: "place" };
+  // Normal summon limit (1 invocación normal por turno)
   if (!isSpecialSummon && summonedThisTurn >= 1) return { valid: false, type: "place" };
   return { valid: true, type: "place" };
 }
@@ -922,7 +925,7 @@ function GameScreen({ state, onSelectCard, onPlaceCard, onAttackAll, onEndTurn, 
     if (allAttacked && state.attackedThisTurn.length > 0) return "Todos atacaron. Coloca cartas o pasa turno.";
     if (!selectedCard) {
       if (state.turnNumber <= 1) return "Primer turno: no puedes atacar. Coloca cartas.";
-      return "Toca una carta de tu mano o pulsa ⚔ para atacar con todos.";
+      return "Toca una carta, luego colócala en zona de monstruo o altar.";
     }
     const c = selectedCard;
     if (c.type === "ANOMALIA") return "🌀 Toca un monstruo enemigo para consumir";
