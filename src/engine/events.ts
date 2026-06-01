@@ -1,0 +1,17 @@
+// ============ EVENT CONSTANTS (EDOPRO-style) ============
+
+export const Events = {
+  ON_PLACE: "ON_PLACE",
+  ON_REMOVE: "ON_REMOVE",
+  ON_ATTACK_DECLARED: "ON_ATTACK_DECLARED",
+  ON_ATTACK_HIT: "ON_ATTACK_HIT",
+  BEFORE_DESTROY: "BEFORE_DESTROY",
+  ON_ENEMY_SUMMON: "ON_ENEMY_SUMMON",
+  ON_ENEMY_DESTROY: "ON_ENEMY_DESTROY",
+  ON_ALLY_DESTROY: "ON_ALLY_DESTROY",
+  ON_TURN_START: "ON_TURN_START",
+  ON_TURN_END: "ON_TURN_END",
+  ON_DRAW: "ON_DRAW",
+} as const;
+
+export type EventType = (typeof Events)[keyof typeof Events];
