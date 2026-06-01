@@ -36,8 +36,8 @@ export function getValidSlots(card: CardData): SlotId[] {
     return [];
   }
 
-  // Regular elementals (FULGUR, AURA, ABIS, FOSO) — columns 1 and 3
-  return ["p-mon-1", "p-mon-3"];
+  // Todas las cartas son híbridas (monstruo + altar) — pueden ir en zonas de monstruo o altares
+  return ["p-mon-1", "p-mon-3", "p-altar-luz", "p-altar-sombra"];
 }
 
 /**
@@ -90,11 +90,9 @@ export function validatePlacement(
     return null;
   }
 
-  // Altar placement rules
+  // Altar placement rules — todas las cartas son híbridas y pueden ir en altares
   if (slotId.includes("altar")) {
-    if (!card.flags.includes("isEnergy")) return "Solo monstruos Celestiales o Umbrales pueden ir en el Altar.";
-    if (slotId === "p-altar-luz" && card.type !== "CELESTIAL") return "Este Altar solo acepta cartas Celestiales.";
-    if (slotId === "p-altar-sombra" && card.type !== "UMBRAL") return "Este Altar solo acepta cartas Umbrales.";
+    // No hay restricción de atributo — cualquier carta puede ir en cualquier altar
     return null;
   }
 
