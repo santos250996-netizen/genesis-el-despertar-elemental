@@ -94,3 +94,28 @@ Stage Summary:
 - ART_DESIGN_PATTERNS.md is now v3.0, fully aligned with the new CartaMaestra architecture
 - The design document covers all three dimensions: RACE (anatomy) + ATTRIBUTE (palette/frame) + METHOD (visual modifiers)
 - All 16 current cards have art direction descriptions matching their race × attribute × method combination
+
+---
+Task ID: 1
+Agent: Main Agent
+Task: Generar las 16 imágenes de cartas del mazo base "Luz y Oscuridad"
+
+Work Log:
+- Leí cards.ts, art-map.ts y ART_DESIGN_PATTERNS.md para construir prompts según las plantillas oficiales
+- Generé CEL-001 a CEL-003 (GENS/CELESTIAL/NORMAL) — éxito
+- CEL-004 (Eos) fue filtrada por content filter en primer intento — rehice prompt eliminando "ghostly" y funcionó
+- Generé CEL-004 a CEL-007 (ÁNIMA + FÁBULA, NORMAL) — éxito
+- Generé CEL-008 (FÁBULA/CORRUPCIÓN) — éxito
+- Generé UMB-009 a UMB-011 (NECRO/UMBRAL, NORMAL + ANOMALÍA) — éxito
+- Generé UMB-012 a UMB-014 (CLASTO/UMBRAL, NORMAL + ANOMALÍA + ECLIPSE) — éxito
+- Generé UMB-015 (SECAT/UMBRAL/NORMAL) — éxito
+- Generé UMB-016 (SECAT/UMBRAL/GÉNESIS) — éxito
+- Verifiqué que las 16 imágenes existen en /public/cards/
+- Verifiqué que ART_MAP coincide exactamente con los archivos
+- Verifiqué que el dev server sirve las imágenes (HTTP 200)
+
+Stage Summary:
+- 16 imágenes PNG generadas (768x1344) en /home/z/my-project/public/cards/
+- Cada prompt siguió las plantillas de ART_DESIGN_PATTERNS.md (dark fantasy watercolor, paleta por atributo, modificadores por método)
+- ART_MAP ya estaba configurado correctamente — no requirió cambios
+- Dev server corriendo en localhost:3000, imágenes servidas correctamente
