@@ -21,14 +21,14 @@ export function getValidSlots(card: CardData): SlotId[] {
     return ["p-artifact"];
   }
 
-  // ECLIPSE and GENESIS — column 2 only (special summon)
+  // ECLIPSE and GENESIS — column 2 (special summon) o altares (como altar)
   if (card.type === "ECLIPSE" || card.flags.includes("isGenesis")) {
-    return ["p-mon-2"];
+    return ["p-mon-2", "p-altar-luz", "p-altar-sombra"];
   }
 
-  // CORRUPCION — column 3 only (special summon with sacrifice)
+  // CORRUPCION — column 3 (sacrificio) o altares (como altar)
   if (card.type === "CORRUPCION") {
-    return ["p-mon-3"];
+    return ["p-mon-3", "p-altar-luz", "p-altar-sombra"];
   }
 
   // ANOMALIA — handled specially (targets enemy monster), not placed directly
@@ -101,25 +101,34 @@ export function validatePlacement(
     return "La Zona Central (M2) solo acepta monstruos Eclipse o Genesis.";
   }
 
-  // ECLIPSE requires both altars
+  // ECLIPSE: en p-mon-2 requiere ambos altares, en altar va normal
   if (card.type === "ECLIPSE") {
-    if (slotId !== "p-mon-2") return "Eclipse solo puede invocarse en la Zona Central (M2).";
-    if (!board["p-altar-luz"] || !board["p-altar-sombra"]) return "Eclipse requiere ambos Altares activos.";
+    if (slotId === "p-mon-2") {
+      if (!board["p-altar-luz"] || !board["p-altar-sombra"]) return "Eclipse requiere ambos Altares activos.";
+      return null;
+    }
+    // Si va al altar, se permite sin requisitos especiales
     return null;
   }
 
-  // CORRUPCION requires shadow altar + sacrifice in zone 3
+  // CORRUPCION: en p-mon-3 requiere sacrificio, en altar va normal
   if (card.type === "CORRUPCION") {
-    if (slotId !== "p-mon-3") return "Corrupción solo puede invocarse en la Zona 3.";
-    if (!board["p-altar-sombra"]) return "Corrupción requiere el Altar de Sombra activo.";
-    if (!board["p-mon-3"]) return "Necesitas un monstruo en Zona 3 para sacrificar.";
+    if (slotId === "p-mon-3") {
+      if (!board["p-altar-sombra"]) return "Corrupción requiere el Altar de Sombra activo.";
+      if (!board["p-mon-3"]) return "Necesitas un monstruo en Zona 3 para sacrificar.";
+      return null;
+    }
+    // Si va al altar, se permite sin requisitos especiales
     return null;
   }
 
-  // GENESIS requires both altars and goes to zone 2
+  // GENESIS: en p-mon-2 requiere ambos altares, en altar va normal
   if (card.flags.includes("isGenesis")) {
-    if (slotId !== "p-mon-2") return "Génesis solo puede invocarse en la Columna Central.";
-    if (!board["p-altar-luz"] || !board["p-altar-sombra"]) return "Se requiere Luz y Sombra activas.";
+    if (slotId === "p-mon-2") {
+      if (!board["p-altar-luz"] || !board["p-altar-sombra"]) return "Se requiere Luz y Sombra activas.";
+      return null;
+    }
+    // Si va al altar, se permite sin requisitos especiales
     return null;
   }
 

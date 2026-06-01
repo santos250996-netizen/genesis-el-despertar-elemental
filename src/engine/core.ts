@@ -403,12 +403,14 @@ export class DuelEngine implements DuelEngineInterface {
       return;
     }
 
-    // ── CORRUPCIÓN: sacrifice monster in zone 3 ──
-    if (card.type === "CORRUPCION") {
-      const sacrifice = newBoard["p-mon-3"]!;
-      newPlayerDeck = [...newPlayerDeck, sacrifice];
-      newBoard = { ...newBoard, "p-mon-3": null };
-      this.addLog(`>> ¡[${sacrifice.name}] es consumido por la oscuridad y retorna al fondo del mazo!`);
+    // ── CORRUPCIÓN: sacrifice monster in zone 3 (only when placed in p-mon-3) ──
+    if (card.type === "CORRUPCION" && slotId === "p-mon-3") {
+      const sacrifice = newBoard["p-mon-3"];
+      if (sacrifice) {
+        newPlayerDeck = [...newPlayerDeck, sacrifice];
+        newBoard = { ...newBoard, "p-mon-3": null };
+        this.addLog(`>> ¡[${sacrifice.name}] es consumido por la oscuridad y retorna al fondo del mazo!`);
+      }
     }
 
     // ── CORRUPCIÓN: Kraken Colosal — handled by card script 86.ts (onPlace) ──

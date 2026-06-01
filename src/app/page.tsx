@@ -133,17 +133,33 @@ function getTargetInfo(slotId: SlotId, card: CardData | null, board: Record<Slot
     return { valid: true, type: "consume" };
   }
   if (card.type === "CORRUPCION") {
+    // Corrupción en altar: se permite sin sacrificio
+    if (slotId.includes("altar")) {
+      if (board[slotId as SlotId]) return { valid: false, type: "place" };
+      return { valid: true, type: "place" };
+    }
+    // Corrupción en p-mon-3: requiere sacrificio
     if (slotId !== "p-mon-3") return { valid: false, type: "sacrifice" };
     if (!board["p-altar-sombra"] || !board["p-mon-3"]) return { valid: false, type: "sacrifice" };
     if (summonedThisTurn >= 1) return { valid: false, type: "sacrifice" };
     return { valid: true, type: "sacrifice" };
   }
   if (card.type === "ECLIPSE") {
+    // Eclipse en altar: se permite sin requisitos
+    if (slotId.includes("altar")) {
+      if (board[slotId as SlotId]) return { valid: false, type: "place" };
+      return { valid: true, type: "place" };
+    }
     if (slotId !== "p-mon-2") return { valid: false, type: "place" };
     if (!board["p-altar-luz"] || !board["p-altar-sombra"]) return { valid: false, type: "place" };
     return { valid: true, type: "place" };
   }
   if (card.flags.includes("isGenesis")) {
+    // Génesis en altar: se permite sin requisitos
+    if (slotId.includes("altar")) {
+      if (board[slotId as SlotId]) return { valid: false, type: "place" };
+      return { valid: true, type: "place" };
+    }
     if (slotId !== "p-mon-2") return { valid: false, type: "place" };
     if (!board["p-altar-luz"] || !board["p-altar-sombra"]) return { valid: false, type: "place" };
     return { valid: true, type: "place" };
