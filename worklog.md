@@ -71,3 +71,26 @@ Stage Summary:
 - All 16 cards (10 NORMAL + 3 ANOMALÍA + 1 CORRUPCIÓN + 1 ECLIPSE + 1 GÉNESIS) properly display with CELESTIAL/UMBRAL visual styling
 - Shield system (addShield/consumeShield) fully implemented in DuelEngine
 - CardData interface extended for backward compat with old ARTEFACTO code paths
+
+---
+Task ID: art-design-patterns-v3
+Agent: Main
+Task: Update ART_DESIGN_PATTERNS.md with 11-race glossary, visual frame guide, and art direction by invocation method
+
+Work Log:
+- Read existing ART_DESIGN_PATTERNS.md (v2.0 with old 52-card system)
+- Rewrote entire document as v3.0 incorporating:
+  - Complete 11-race glossary (GENS, VOLATUS, MARINA, FERA, NECRO, ÁNIMA, SECAT, CLASTO, SATIVA, ARTIFEX, FÁBULA) with concept, examples, and art direction per race
+  - Visual frame guide by ATRIBUTO (6 attributes → 6 frame colors)
+  - Frame modifiers by MÉTODO DE INVOCACIÓN (NORMAL=clean, ANOMALÍA=distortion, CORRUPCIÓN=infection, ECLIPSE=bicolor, GÉNESIS=prismatic)
+  - Updated prompt templates for each invocation method with specific visual direction
+  - Updated card list from old 52 cards to current 16-card "Luz y Oscuridad" deck
+  - Added cross-reference table: RAZA × ATRIBUTO × MÉTODO = design
+  - Updated file naming convention to match new CartaMaestra ID system
+- Updated RAZA_INFO in types.ts to include `concepto` and `ejemplos` fields
+- Verified TypeScript compiles clean after all changes
+
+Stage Summary:
+- ART_DESIGN_PATTERNS.md is now v3.0, fully aligned with the new CartaMaestra architecture
+- The design document covers all three dimensions: RACE (anatomy) + ATTRIBUTE (palette/frame) + METHOD (visual modifiers)
+- All 16 current cards have art direction descriptions matching their race × attribute × method combination

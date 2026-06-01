@@ -228,18 +228,18 @@ export const ATRIBUTO_INFO: Record<Atributo, {
 // INFO VISUAL — Razas
 // ═══════════════════════════════════════════════════════════════
 
-export const RAZA_INFO: Record<RazaTipo, { label: string; emoji: string }> = {
-  GENS:     { label: "Gens",     emoji: "✨" },
-  VOLATUS:  { label: "Volatus",  emoji: "🪶" },
-  MARINA:   { label: "Marina",   emoji: "🐚" },
-  FERA:     { label: "Fera",     emoji: "🐾" },
-  NECRO:    { label: "Necro",    emoji: "💀" },
-  ANIMA:    { label: "Ánima",    emoji: "👻" },
-  SECAT:    { label: "Secat",    emoji: "🕳️" },
-  CLASTO:   { label: "Clasto",   emoji: "💥" },
-  SATIVA:   { label: "Sativa",   emoji: "🌿" },
-  ARTIFEX:  { label: "Artifex",  emoji: "⚙️" },
-  FABULA:   { label: "Fábula",   emoji: "📖" },
+export const RAZA_INFO: Record<RazaTipo, { label: string; emoji: string; concepto: string; ejemplos: string }> = {
+  GENS:     { label: "Gens",     emoji: "✨", concepto: "Los Mortales / Las Civilizaciones", ejemplos: "Guerreros, caballeros, chamanes, sabios, reyes" },
+  VOLATUS:  { label: "Volatus",  emoji: "🪶", concepto: "Los Alados / Dominio Aéreo", ejemplos: "Ángeles, valquirias, grifos, pegasos, arpías" },
+  MARINA:   { label: "Marina",   emoji: "🐚", concepto: "Las Aguas / Fuerzas Náuticas", ejemplos: "Tritones, sirenas, leviatanes, serpientes de mar" },
+  FERA:     { label: "Fera",     emoji: "🐾", concepto: "Las Bestias Salvajes", ejemplos: "Lobos, osos gigantes, leones prehistóricos, quimeras" },
+  NECRO:    { label: "Necro",    emoji: "💀", concepto: "Los No-Muertos / Reanimados", ejemplos: "Esqueletos, zombis, momias, liches" },
+  ANIMA:    { label: "Ánima",    emoji: "👻", concepto: "Los Espíritus / Energías Incorpóreas", ejemplos: "Fantasmas, fuegos fatuos, poltergeist, sombras andantes" },
+  SECAT:    { label: "Secat",    emoji: "🕳️", concepto: "El Enjambre / Los Insectos", ejemplos: "Escarabajos, avispas, mantis, arañas, escorpiones" },
+  CLASTO:   { label: "Clasto",   emoji: "💥", concepto: "Las Rocas / Los Minerales", ejemplos: "Golems, gigantes de piedra, monolitos rúnicos, gárgolas" },
+  SATIVA:   { label: "Sativa",   emoji: "🌿", concepto: "La Botánica / Las Plantas", ejemplos: "Ents, plantas carnívoras, hongos caminantes, zarzas" },
+  ARTIFEX:  { label: "Artifex",  emoji: "⚙️", concepto: "Lo Fabricado / Las Máquinas", ejemplos: "Autómatas, robots rúnicos, goliats de metal" },
+  FABULA:   { label: "Fábula",  emoji: "📖", concepto: "La Mitología / Los Dioses", ejemplos: "Dioses ancestrales, titanes, avatares divinos" },
 };
 
 // ═══════════════════════════════════════════════════════════════
