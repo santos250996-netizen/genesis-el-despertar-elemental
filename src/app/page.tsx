@@ -2,7 +2,7 @@
 
 import { useRef, useEffect, useState } from "react";
 import { useDuelEngine } from "@/hooks/use-duel-engine";
-import { CARD_TYPE_INFO, type CardType, type CardData, type SlotId, type GameState } from "@/engine/types";
+import { CARD_TYPE_INFO, ATRIBUTO_INFO, RAZA_INFO, METODO_INFO, type CardType, type CardData, type SlotId, type GameState, type MetodoInvocacion } from "@/engine/types";
 import { ALL_CARDS_ARRAY, CARDS } from "@/data/cards";
 import { ART_MAP } from "@/data/art-map";
 import { DECKS } from "@/data/decks";
@@ -18,6 +18,71 @@ function buildDefaultDeck(): CardData[] {
 function getArtSrc(card: CardData): string | null {
   const key = card._cartaMaestra?.id ?? card.id;
   return ART_MAP[key] || null;
+}
+
+/** Compute card frame classes based on atributo + metodo_invocacion */
+function getCardFrameClasses(card: CardData): {
+  border: string;
+  gradient: string;
+  badge: string;
+  extraClass: string;
+} {
+  const metodo = card.metodo_invocacion;
+  const atributoInfo = ATRIBUTO_INFO[card.atributo];
+  const metodoInfo = METODO_INFO[metodo];
+
+  switch (metodo) {
+    case "NORMAL":
+      return {
+        border: atributoInfo.border,
+        gradient: atributoInfo.gradient,
+        badge: `bg-black/50 ${atributoInfo.textColor} border ${atributoInfo.border}`,
+        extraClass: "",
+      };
+    case "ANOMALIA":
+      return {
+        border: atributoInfo.border,
+        gradient: atributoInfo.gradient,
+        badge: metodoInfo.badge,
+        extraClass: "ring-2 ring-purple-500/50 shadow-[0_0_8px_rgba(168,85,247,0.3)]",
+      };
+    case "CORRUPCION":
+      return {
+        border: atributoInfo.border,
+        gradient: atributoInfo.gradient,
+        badge: metodoInfo.badge,
+        extraClass: "ring-2 ring-red-600/40 shadow-[inset_0_0_10px_rgba(220,38,38,0.3),0_0_8px_rgba(220,38,38,0.2)]",
+      };
+    case "ECLIPSE":
+      return {
+        border: "border-indigo-400",
+        gradient: "from-amber-500 via-indigo-800 to-violet-900",
+        badge: metodoInfo.badge,
+        extraClass: "shadow-[0_0_10px_rgba(99,102,241,0.3)]",
+      };
+    case "GENESIS":
+      return {
+        border: "border-fuchsia-400",
+        gradient: "from-fuchsia-800 via-purple-900 to-fuchsia-950",
+        badge: metodoInfo.badge,
+        extraClass: "animate-[pulseGlow_2s_ease-in-out_infinite_alternate] shadow-[0_0_14px_rgba(217,70,239,0.4)]",
+      };
+    default:
+      return {
+        border: "border-zinc-500",
+        gradient: "from-zinc-600 to-zinc-800",
+        badge: "bg-zinc-700 text-zinc-300",
+        extraClass: "",
+      };
+  }
+}
+
+/** Build type line string: "Atributo/Raza/Metodo" e.g. "Umbral/Clasto/Normal" */
+function getTypeLine(card: CardData): string {
+  const atributoLabel = ATRIBUTO_INFO[card.atributo].label;
+  const razaLabel = RAZA_INFO[card.raza_tipo].label;
+  const metodoLabel = METODO_INFO[card.metodo_invocacion].label;
+  return `${atributoLabel}/${razaLabel}/${metodoLabel}`;
 }
 
 // ============ TARGETING ============
@@ -88,10 +153,12 @@ function CardView({
   overrideAtk?: number;
   immuneEffectDestroy?: boolean;
 }) {
-  const info = CARD_TYPE_INFO[card.type];
-  const isGenesis = card.type === "GENESIS";
+  const frame = getCardFrameClasses(card);
+  const isGenesis = card.metodo_invocacion === "GENESIS";
   const artSrc = getArtSrc(card);
-  const hasEffects = card.effects.length > 0;
+  const hasEffects = card.efecto_monstruo.length > 0 || card.efecto_altar.length > 0;
+  const typeLine = getTypeLine(card);
+  const metodoInfo = METODO_INFO[card.metodo_invocacion];
 
   if (size === "tiny") {
     return (
@@ -99,15 +166,14 @@ function CardView({
         onClick={onClick}
         className={`
           relative rounded overflow-hidden cursor-pointer w-full h-full touch-manipulation
-          border ${info.border}
+          border ${frame.border} ${frame.extraClass}
           ${selected ? "ring-2 ring-amber-400" : ""}
-          ${isGenesis ? "animate-[pulseGlow_2s_ease-in-out_infinite_alternate]" : ""}
         `}
       >
         {artSrc ? (
           <img src={artSrc} alt={card.name} className="w-full h-full object-cover" />
         ) : (
-          <div className={`w-full h-full bg-gradient-to-br ${info.gradient}`} />
+          <div className={`w-full h-full bg-gradient-to-br ${frame.gradient}`} />
         )}
         <div className="absolute inset-x-0 top-0 h-4 bg-gradient-to-b from-black/70 to-transparent" />
         <div className="absolute inset-x-0 bottom-0 h-3 bg-gradient-to-t from-black/70 to-transparent" />
@@ -128,12 +194,11 @@ function CardView({
       className={`
         relative rounded-md overflow-hidden cursor-pointer touch-manipulation
         ${size === "small" ? "w-full h-full" : isGenesis ? "w-[68px] sm:w-[78px] aspect-[3/4]" : "w-[68px] sm:w-[78px]"}
-        border-2 ${info.border}
+        border-2 ${frame.border} ${frame.extraClass}
         shadow-[0_2px_8px_rgba(0,0,0,0.5)]
         transition-all duration-150
         ${onClick ? "hover:scale-105 active:scale-95" : ""}
         ${selected ? "scale-105 ring-2 ring-amber-400 shadow-[0_0_12px_rgba(245,158,11,0.5)]" : ""}
-        ${isGenesis ? "animate-[pulseGlow_2s_ease-in-out_infinite_alternate]" : ""}
       `}
     >
       {/* Genesis cards: FULL BLEED art covering entire card */}
@@ -142,15 +207,15 @@ function CardView({
           {artSrc ? (
             <img src={artSrc} alt={card.name} className="w-full h-full object-cover" />
           ) : (
-            <div className={`w-full h-full bg-gradient-to-br ${info.gradient}`} />
+            <div className={`w-full h-full bg-gradient-to-br ${frame.gradient}`} />
           )}
           {/* Top gradient for name readability */}
           <div className="absolute inset-x-0 top-0 h-10 bg-gradient-to-b from-black/70 to-transparent" />
           {/* Bottom gradient for info readability */}
           <div className="absolute inset-x-0 bottom-0 h-12 bg-gradient-to-t from-black/80 via-black/40 to-transparent" />
-          {/* Type badge */}
-          <div className="absolute top-0.5 left-0.5 text-[0.35rem] font-bold px-0.5 rounded-sm bg-purple-900/70 text-purple-200 backdrop-blur-sm border border-purple-500/30">
-            {info.label}
+          {/* Method badge */}
+          <div className={`absolute top-0.5 left-0.5 text-[0.35rem] font-bold px-0.5 rounded-sm ${metodoInfo.badge} backdrop-blur-sm`}>
+            {metodoInfo.label}
           </div>
           {/* Name overlay */}
           <div className={`absolute inset-x-0 top-0.5 text-center font-bold truncate px-5 ${size === "small" ? "text-[0.35rem]" : "text-[0.45rem]"} text-purple-100 drop-shadow-[0_1px_3px_rgba(0,0,0,0.9)]`}>
@@ -166,7 +231,7 @@ function CardView({
           {size === "normal" && (
             <div className="absolute inset-x-0 bottom-0 flex items-center justify-between px-1 py-0.5">
               <div className="text-[0.28rem] text-purple-200/80 italic truncate flex-1 mr-1 drop-shadow-[0_1px_2px_rgba(0,0,0,0.9)]">
-                {card.effects[0]?.desc || ""}
+                {card.efecto_monstruo[0]?.desc || ""}
               </div>
               <div className="font-bold text-amber-400 shrink-0 text-[0.55rem] drop-shadow-[0_1px_2px_rgba(0,0,0,0.9)]">
                 ⚔ {overrideAtk ?? card.atk}
@@ -188,19 +253,19 @@ function CardView({
         </div>
       ) : (
       <>
-      {/* Normal cards: Art 75% + Footer 25% */}
+      {/* Non-Genesis cards: Art 75% + Footer 25% */}
       <div className={`relative ${size === "small" ? "h-full" : "h-[75%]"} bg-zinc-900 overflow-hidden`}>
         {artSrc ? (
           <img src={artSrc} alt={card.name} className={`w-full h-full object-cover${size === "small" ? " object-top" : ""}`} />
         ) : (
-          <div className={`w-full h-full bg-gradient-to-br ${info.gradient}`} />
+          <div className={`w-full h-full bg-gradient-to-br ${frame.gradient}`} />
         )}
         {/* Gradient overlays for readability */}
         <div className="absolute inset-x-0 top-0 h-8 bg-gradient-to-b from-black/60 to-transparent" />
         {size === "small" && <div className="absolute inset-x-0 bottom-0 h-5 bg-gradient-to-t from-black/70 to-transparent" />}
-        {/* Type badge */}
+        {/* Atributo badge */}
         <div className="absolute top-0.5 left-0.5 text-[0.35rem] font-bold px-0.5 rounded-sm bg-black/50 text-white/80 backdrop-blur-sm">
-          {info.label}
+          {ATRIBUTO_INFO[card.atributo].label}
         </div>
         {/* Name overlay */}
         <div className={`absolute inset-x-0 top-0.5 text-center font-bold truncate px-5 ${size === "small" ? "text-[0.35rem]" : "text-[0.45rem]"} text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)]`}>
@@ -225,14 +290,17 @@ function CardView({
           </div>
         )}
       </div>
-      {/* ATK Footer — only for hand cards (normal size) */}
+      {/* Footer — only for hand cards (normal size): type line + ATK + effect */}
       {size === "normal" && (
-        <div className="flex items-center justify-between bg-black/70 px-1 py-0.5 h-[25%]">
-          <div className="text-[0.28rem] text-zinc-400 italic truncate flex-1 mr-1">
-            {card.effects[0]?.desc || ""}
+        <div className="flex flex-col bg-black/70 px-1 py-0.5 h-[25%]">
+          <div className="text-[0.28rem] font-bold text-zinc-300 truncate">
+            {typeLine}
           </div>
-          <div className="font-bold text-amber-400 shrink-0 text-[0.55rem]">
+          <div className="font-bold text-amber-400 text-[0.45rem] leading-tight">
             ⚔ {overrideAtk ?? card.atk}
+          </div>
+          <div className="text-[0.25rem] text-zinc-500 italic truncate flex-1">
+            {card.efecto_monstruo[0]?.desc || card.efecto_altar[0]?.desc || ""}
           </div>
         </div>
       )}
@@ -245,9 +313,12 @@ function CardView({
 // ============ CARD DETAIL SHEET ============
 
 function CardDetailSheet({ card, onClose }: { card: CardData; onClose: () => void }) {
-  const info = CARD_TYPE_INFO[card.type];
+  const frame = getCardFrameClasses(card);
   const artSrc = getArtSrc(card);
-  const isGenesis = card.type === "GENESIS";
+  const isGenesis = card.metodo_invocacion === "GENESIS";
+  const typeLine = getTypeLine(card);
+  const metodoInfo = METODO_INFO[card.metodo_invocacion];
+  const atributoInfo = ATRIBUTO_INFO[card.atributo];
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center safe-bottom" onClick={onClose}>
@@ -259,61 +330,63 @@ function CardDetailSheet({ card, onClose }: { card: CardData; onClose: () => voi
         style={{ aspectRatio: '768/1344', maxHeight: '88vh' }}
       >
         {/* Card art - full card */}
-        <div className="absolute inset-0 rounded-xl overflow-hidden shadow-2xl ring-1 ring-zinc-600/50">
+        <div className={`absolute inset-0 rounded-xl overflow-hidden shadow-2xl ring-1 ring-zinc-600/50 border-2 ${frame.border} ${frame.extraClass}`}>
           {artSrc ? (
             <img src={artSrc} alt={card.name} className="w-full h-full object-cover" />
           ) : (
-            <div className={`w-full h-full bg-gradient-to-br ${info.gradient}`} />
+            <div className={`w-full h-full bg-gradient-to-br ${frame.gradient}`} />
           )}
         </div>
 
-        {/* Top overlay - type badge + name + ATK */}
-        <div className={`absolute inset-x-0 top-0 ${isGenesis ? 'h-14' : 'h-10'} bg-gradient-to-b from-black/75 to-transparent flex flex-col justify-end pb-1.5 px-3 rounded-t-xl`}>
-          <div className="flex items-center gap-2">
-            <span className={`text-[0.6rem] font-bold px-1.5 py-0.5 rounded ${info.border} ${info.textColor} border`}>
-              {info.label}
+        {/* Top overlay - badge + name + type line + ATK */}
+        <div className={`absolute inset-x-0 top-0 ${isGenesis ? 'h-20' : 'h-16'} bg-gradient-to-b from-black/80 to-transparent flex flex-col justify-end pb-1.5 px-3 rounded-t-xl`}>
+          <div className="flex items-center gap-1.5">
+            <span className={`text-[0.55rem] font-bold px-1.5 py-0.5 rounded ${atributoInfo.border} ${atributoInfo.textColor} border`}>
+              {atributoInfo.label}
             </span>
-            {card.alsoMatches && card.alsoMatches.length > 0 && (
-              <span className="text-[0.5rem] font-bold px-1 py-0.5 rounded bg-zinc-700/80 text-zinc-300 border border-zinc-500/50">
-                + {card.alsoMatches.join("/")}
+            {card.metodo_invocacion !== "NORMAL" && (
+              <span className={`text-[0.5rem] font-bold px-1.5 py-0.5 rounded ${metodoInfo.badge} border`}>
+                {metodoInfo.emoji} {metodoInfo.label}
               </span>
             )}
+          </div>
+          <h3 className={`font-bold text-white drop-shadow-[0_2px_3px_rgba(0,0,0,0.9)] leading-tight ${isGenesis ? 'text-lg mt-1 text-purple-100' : 'text-base mt-0.5'}`}>{card.name}</h3>
+          <div className="flex items-center gap-2 mt-0.5">
+            <span className="text-[0.6rem] text-zinc-400 font-semibold">{typeLine}</span>
             <span className="text-sm font-bold text-amber-400 drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)]">⚔ {card.atk}</span>
           </div>
-          <h3 className={`font-bold text-white drop-shadow-[0_2px_3px_rgba(0,0,0,0.9)] leading-tight ${isGenesis ? 'text-lg mt-1 text-purple-100' : 'text-sm mt-0.5'}`}>{card.name}</h3>
         </div>
 
-        {/* Bottom overlay - effects */}
+        {/* Bottom overlay - effects split into Monstruo / Altar */}
         <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/90 via-black/70 to-transparent rounded-b-xl">
           <div className="px-4 pb-5 pt-8">
-            {card.effects.length > 0 ? (
-              <div className="space-y-1.5">
-                {card.effects.map((eff, i) => (
-                  <div key={i} className="text-[0.7rem] text-zinc-200 leading-relaxed drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)]">
-                    <span className={`font-bold ${
-                      eff.trigger === "celestial" ? "text-amber-300" :
-                      eff.trigger === "umbral" ? "text-violet-400" :
-                      eff.trigger === "altar" ? "text-cyan-300" :
-                      eff.trigger === "altar_fulgur" ? "text-red-400" :
-                      eff.trigger === "altar_aura" ? "text-emerald-400" :
-                      eff.trigger === "altar_abis" ? "text-blue-400" :
-                      eff.trigger === "artifact" ? "text-zinc-300" :
-                      "text-purple-400"
-                    }`}>{
-                      eff.trigger === "celestial" ? "☀ Celestial" :
-                      eff.trigger === "umbral" ? "🌑 Umbral" :
-                      eff.trigger === "altar" ? "♨ Altar" :
-                      eff.trigger === "altar_fulgur" ? "🔥 Altar Fulgur" :
-                      eff.trigger === "altar_aura" ? "🌀 Altar Aura" :
-                      eff.trigger === "altar_abis" ? "🌊 Altar Abis" :
-                      eff.trigger === "artifact" ? "🛡 Artefacto" :
-                      "✦ Génesis"
-                    }:</span>{" "}
+            {/* Efecto Monstruo */}
+            {card.efecto_monstruo.length > 0 && (
+              <div className="mb-2">
+                <div className="text-[0.6rem] font-bold text-amber-400 mb-0.5 drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)]">
+                  ⚔ Efecto Monstruo
+                </div>
+                {card.efecto_monstruo.map((eff, i) => (
+                  <div key={`m-${i}`} className="text-[0.65rem] text-zinc-200 leading-relaxed drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)]">
                     {eff.desc}
                   </div>
                 ))}
               </div>
-            ) : (
+            )}
+            {/* Efecto Altar */}
+            {card.efecto_altar.length > 0 && (
+              <div>
+                <div className="text-[0.6rem] font-bold text-cyan-400 mb-0.5 drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)]">
+                  ♨ Efecto Altar
+                </div>
+                {card.efecto_altar.map((eff, i) => (
+                  <div key={`a-${i}`} className="text-[0.65rem] text-zinc-200 leading-relaxed drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)]">
+                    {eff.desc}
+                  </div>
+                ))}
+              </div>
+            )}
+            {card.efecto_monstruo.length === 0 && card.efecto_altar.length === 0 && (
               <p className="text-[0.7rem] text-zinc-400 italic drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)]">Sin efectos impresos.</p>
             )}
           </div>
