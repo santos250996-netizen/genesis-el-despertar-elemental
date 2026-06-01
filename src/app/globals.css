@@ -145,6 +145,50 @@ button, a, [role="button"], .touch-manipulation {
   }
 }
 
+/* Corrupción frame: alternates between attribute color and green */
+@keyframes corrupcionFrame {
+  0%, 100% {
+    border-color: var(--atributo-color);
+    box-shadow: 0 0 8px var(--atributo-glow);
+  }
+  50% {
+    border-color: #22c55e;
+    box-shadow: 0 0 12px rgba(34, 197, 94, 0.5);
+  }
+}
+
+/* Anomalía frame: alternates between attribute color and gray */
+@keyframes anomaliaFrame {
+  0%, 100% {
+    border-color: var(--atributo-color);
+    box-shadow: 0 0 6px var(--atributo-glow);
+  }
+  50% {
+    border-color: #9ca3af;
+    box-shadow: 0 0 10px rgba(156, 163, 175, 0.5);
+  }
+}
+
+/* Eclipse frame: cycles through white, black, and attribute color */
+@keyframes eclipseFrame {
+  0%, 100% {
+    border-color: #ffffff;
+    box-shadow: 0 0 10px rgba(255, 255, 255, 0.4);
+  }
+  33% {
+    border-color: #000000;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.6);
+  }
+  66% {
+    border-color: var(--atributo-color);
+    box-shadow: 0 0 12px var(--atributo-glow);
+  }
+}
+
+.animate-corrupcion-frame { animation: corrupcionFrame 2s ease-in-out infinite; }
+.animate-anomalia-frame { animation: anomaliaFrame 2s ease-in-out infinite; }
+.animate-eclipse-frame { animation: eclipseFrame 3s ease-in-out infinite; }
+
 /* ── Screen transition animations ── */
 
 @keyframes screenFadeIn {

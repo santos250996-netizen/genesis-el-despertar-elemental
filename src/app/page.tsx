@@ -20,16 +20,32 @@ function getArtSrc(card: CardData): string | null {
   return ART_MAP[key] || null;
 }
 
+/** CSS custom property values per atributo for frame animations */
+const ATRIBUTO_CSS: Record<string, { color: string; glow: string }> = {
+  FULGUR:    { color: "#ef4444", glow: "rgba(239, 68, 68, 0.4)" },
+  ABIS:      { color: "#3b82f6", glow: "rgba(59, 130, 246, 0.4)" },
+  FOSO:      { color: "#d97706", glow: "rgba(217, 119, 6, 0.4)" },
+  AURA:      { color: "#10b981", glow: "rgba(16, 185, 129, 0.4)" },
+  CELESTIAL: { color: "#fbbf24", glow: "rgba(251, 191, 36, 0.4)" },
+  UMBRAL:    { color: "#8b5cf6", glow: "rgba(139, 92, 246, 0.4)" },
+};
+
 /** Compute card frame classes based on atributo + metodo_invocacion */
 function getCardFrameClasses(card: CardData): {
   border: string;
   gradient: string;
   badge: string;
   extraClass: string;
+  style: React.CSSProperties;
 } {
   const metodo = card.metodo_invocacion;
   const atributoInfo = ATRIBUTO_INFO[card.atributo];
   const metodoInfo = METODO_INFO[metodo];
+  const atributoCss = ATRIBUTO_CSS[card.atributo] || ATRIBUTO_CSS.CELESTIAL;
+  const cssVars: React.CSSProperties = {
+    "--atributo-color": atributoCss.color,
+    "--atributo-glow": atributoCss.glow,
+  } as React.CSSProperties;
 
   switch (metodo) {
     case "NORMAL":
@@ -38,27 +54,31 @@ function getCardFrameClasses(card: CardData): {
         gradient: atributoInfo.gradient,
         badge: `bg-black/50 ${atributoInfo.textColor} border ${atributoInfo.border}`,
         extraClass: "",
+        style: cssVars,
       };
     case "ANOMALIA":
       return {
         border: atributoInfo.border,
         gradient: atributoInfo.gradient,
         badge: metodoInfo.badge,
-        extraClass: "ring-2 ring-purple-500/50 shadow-[0_0_8px_rgba(168,85,247,0.3)]",
+        extraClass: "animate-anomalia-frame",
+        style: cssVars,
       };
     case "CORRUPCION":
       return {
         border: atributoInfo.border,
         gradient: atributoInfo.gradient,
         badge: metodoInfo.badge,
-        extraClass: "ring-2 ring-red-600/40 shadow-[inset_0_0_10px_rgba(220,38,38,0.3),0_0_8px_rgba(220,38,38,0.2)]",
+        extraClass: "animate-corrupcion-frame",
+        style: cssVars,
       };
     case "ECLIPSE":
       return {
-        border: "border-indigo-400",
+        border: "border-white",
         gradient: "from-amber-500 via-indigo-800 to-violet-900",
         badge: metodoInfo.badge,
-        extraClass: "shadow-[0_0_10px_rgba(99,102,241,0.3)]",
+        extraClass: "animate-eclipse-frame",
+        style: cssVars,
       };
     case "GENESIS":
       return {
@@ -66,6 +86,7 @@ function getCardFrameClasses(card: CardData): {
         gradient: "from-fuchsia-800 via-purple-900 to-fuchsia-950",
         badge: metodoInfo.badge,
         extraClass: "animate-[pulseGlow_2s_ease-in-out_infinite_alternate] shadow-[0_0_14px_rgba(217,70,239,0.4)]",
+        style: cssVars,
       };
     default:
       return {
@@ -73,6 +94,7 @@ function getCardFrameClasses(card: CardData): {
         gradient: "from-zinc-600 to-zinc-800",
         badge: "bg-zinc-700 text-zinc-300",
         extraClass: "",
+        style: cssVars,
       };
   }
 }
@@ -164,6 +186,7 @@ function CardView({
     return (
       <div
         onClick={onClick}
+        style={frame.style}
         className={`
           relative rounded overflow-hidden cursor-pointer w-full h-full touch-manipulation
           border ${frame.border} ${frame.extraClass}
@@ -191,6 +214,7 @@ function CardView({
   return (
     <div
       onClick={onClick}
+      style={frame.style}
       className={`
         relative rounded-md overflow-hidden cursor-pointer touch-manipulation
         ${size === "small" ? "w-full h-full" : isGenesis ? "w-[68px] sm:w-[78px] aspect-[3/4]" : "w-[68px] sm:w-[78px]"}
@@ -328,7 +352,7 @@ function CardDetailSheet({ card, onClose }: { card: CardData; onClose: () => voi
         style={{ aspectRatio: '768/1344', maxHeight: '88vh' }}
       >
         {/* Card art - full card */}
-        <div className={`absolute inset-0 rounded-xl overflow-hidden shadow-2xl ring-1 ring-zinc-600/50 border-2 ${frame.border} ${frame.extraClass}`}>
+        <div className={`absolute inset-0 rounded-xl overflow-hidden shadow-2xl ring-1 ring-zinc-600/50 border-2 ${frame.border} ${frame.extraClass}`} style={frame.style}>
           {artSrc ? (
             <img src={artSrc} alt={card.name} className="w-full h-full object-cover" />
           ) : (
@@ -670,6 +694,7 @@ function DeckEditor({ onDone }: { onDone: (deck: CardData[]) => void }) {
                 } ${
                   full && deckFull ? "opacity-40" : full ? "opacity-60" : "hover:scale-[1.06] active:scale-95"
                 }`}
+                style={frame.style}
               >
                 {/* Art */}
                 <div className="aspect-[3/4] bg-zinc-900 relative overflow-hidden">
@@ -730,7 +755,8 @@ function DeckEditor({ onDone }: { onDone: (deck: CardData[]) => void }) {
                 <div
                   key={`${card.name}-${idx}`}
                   onClick={() => removeCard(idx)}
-                  className={`relative w-12 h-[68px] shrink-0 rounded border-2 ${frame.border} overflow-hidden cursor-pointer group transition-all active:border-red-500 active:opacity-80`}
+                  className={`relative w-12 h-[68px] shrink-0 rounded border-2 ${frame.border} ${frame.extraClass} overflow-hidden cursor-pointer group transition-all active:border-red-500 active:opacity-80`}
+                  style={frame.style}
                 >
                   {artSrc ? (
                     <img src={artSrc} alt={card.name} className="w-full h-full object-cover object-top" />
