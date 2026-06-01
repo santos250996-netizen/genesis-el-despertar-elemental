@@ -36,8 +36,8 @@ export function getValidSlots(card: CardData): SlotId[] {
     return ["p-altar-luz", "p-altar-sombra"];
   }
 
-  // Todas las cartas son híbridas (monstruo + altar) — pueden ir en zonas de monstruo o altares
-  return ["p-mon-1", "p-mon-3", "p-altar-luz", "p-altar-sombra"];
+  // Todas las cartas son híbridas (monstruo + altar) — pueden ir en CUALQUIER zona de monstruo o altares
+  return ["p-mon-1", "p-mon-2", "p-mon-3", "p-altar-luz", "p-altar-sombra"];
 }
 
 /**
@@ -100,10 +100,8 @@ export function validatePlacement(
     return null;
   }
 
-  // Column 2 restriction: only Eclipse and Genesis
-  if (slotId === "p-mon-2" && card.type !== "ECLIPSE" && !card.flags.includes("isGenesis")) {
-    return "La Zona Central (M2) solo acepta monstruos Eclipse o Genesis.";
-  }
+  // Column 2: ahora abierta para invocación NORMAL también
+  // (Solo Eclipse/Genesis tienen requisitos especiales en M2, pero ya se validan abajo)
 
   // ECLIPSE: en p-mon-2 requiere ambos altares, en altar va normal
   if (card.type === "ECLIPSE") {

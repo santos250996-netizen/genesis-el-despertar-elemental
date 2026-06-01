@@ -214,11 +214,10 @@ function getTargetInfo(slotId: SlotId, card: CardData | null, board: Record<Slot
     if (!board["p-altar-luz"] || !board["p-altar-sombra"]) return { valid: false, type: "place" };
     return { valid: true, type: "place" };
   }
-  // Column 2: SOLO Eclipse y Genesis — ningún otro tipo puede ir ahí
-  if (slotId === "p-mon-2") return { valid: false, type: "place" };
-  // Slots válidos para invocación normal: zonas de monstruo (1,3) y altares (luz, sombra)
+  // Column 2: ahora abierta para invocación NORMAL también
+  // Slots válidos para invocación normal: TODAS las zonas de monstruo (1,2,3) y altares (luz, sombra)
   // Todas las cartas son híbridas — pueden ir como monstruo o como altar
-  const validNormalSlots = ["p-mon-1", "p-mon-3", "p-altar-luz", "p-altar-sombra"];
+  const validNormalSlots = ["p-mon-1", "p-mon-2", "p-mon-3", "p-altar-luz", "p-altar-sombra"];
   if (!validNormalSlots.includes(slotId)) return { valid: false, type: "place" };
   // Slot ocupado — no se puede colocar ahí
   if (board[slotId as SlotId]) return { valid: false, type: "place" };

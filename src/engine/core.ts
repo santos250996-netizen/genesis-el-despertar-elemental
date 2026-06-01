@@ -1349,33 +1349,41 @@ export class DuelEngine implements DuelEngineInterface {
       return placedSlot;
     }
 
-    // --- Regular elementals: choose best slot ---
+    // --- Regular elementals: choose best slot (todas las columnas abiertas) ---
+    const emptySlots: SlotId[] = [];
+    if (!newBoard["e-mon-1"]) emptySlots.push("e-mon-1");
+    if (!newBoard["e-mon-2"]) emptySlots.push("e-mon-2");
+    if (!newBoard["e-mon-3"]) emptySlots.push("e-mon-3");
+
     let target: SlotId | null = null;
-    if (!newBoard["e-mon-1"] && !newBoard["e-mon-3"]) {
-      // Both empty: pick the column that would be more advantageous
+    if (emptySlots.length > 0) {
+      // Elegir la columna más ventajosa
       const pMon1 = newBoard["p-mon-1"];
+      const pMon2 = newBoard["p-mon-2"];
       const pMon3 = newBoard["p-mon-3"];
-      if (!pMon1 && pMon3) {
-        target = "e-mon-1"; // Prefer empty opposing column for direct attack potential
-      } else if (pMon1 && !pMon3) {
-        target = "e-mon-3";
-      } else {
-        target = Math.random() < 0.5 ? "e-mon-1" : "e-mon-3";
-      }
-    } else if (!newBoard["e-mon-1"]) {
-      target = "e-mon-1";
-    } else if (!newBoard["e-mon-3"]) {
-      target = "e-mon-3";
+
+      // Priorizar columna con monstruo enemigo débil opuesto para ataque directo
+      const slotScores: { slot: SlotId; score: number }[] = emptySlots.map(slot => {
+        const col = parseInt(slot.split("-")[2]);
+        const pOpponent = newBoard[`p-mon-${col}` as SlotId];
+        let score = 0;
+        if (!pOpponent) score += 10; // Columna vacía = ataque directo
+        else score += Math.max(0, c.atk - (pOpponent?.atk ?? 0)); // Ventaja ATK
+        // Columna central (2) tiene ligera preferencia estratégica
+        if (col === 2) score += 1;
+        return { slot, score };
+      });
+      slotScores.sort((a, b) => b.score - a.score);
+      target = slotScores[0].slot;
     } else {
-      // All slots full: try to upgrade the weakest if significantly better
-      const mon1Atk = newBoard["e-mon-1"]!.atk;
-      const mon3Atk = newBoard["e-mon-3"]!.atk;
-      if (c.atk >= mon1Atk + 5 && c.atk >= mon3Atk + 5) {
-        target = mon1Atk <= mon3Atk ? "e-mon-1" : "e-mon-3";
-      } else if (c.atk >= mon1Atk + 5) {
-        target = "e-mon-1";
-      } else if (c.atk >= mon3Atk + 5) {
-        target = "e-mon-3";
+      // Todos los slots ocupados: intentar reemplazar el más débil si vale la pena
+      const occupiedSlots: SlotId[] = ["e-mon-1", "e-mon-2", "e-mon-3"];
+      const weakest = occupiedSlots.reduce((prev, curr) =>
+        (newBoard[curr]?.atk ?? 999) < (newBoard[prev]?.atk ?? 999) ? curr : prev
+      );
+      const weakAtk = newBoard[weakest]?.atk ?? 0;
+      if (c.atk >= weakAtk + 5) {
+        target = weakest;
       }
     }
 
