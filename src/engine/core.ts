@@ -106,6 +106,7 @@ function createInitialState(): GameState {
     playerChainSummonAvailable: false,
     enemyChainSummonAvailable: false,
     lastSummonSlot: null,
+    altarUsedThisTurn: {},
   };
 }
 
@@ -189,6 +190,17 @@ export class DuelEngine implements DuelEngineInterface {
     }
 
     this.state.board = newBoard;
+
+    // Equipment destruction: if the destroyed monster had an artifact equipped, return it to deck
+    if (owner === "player" && isPlayerSlot(slotId)) {
+      const artifact = this.state.board["p-artifact"];
+      if (artifact && artifact.equippedTo === slotId) {
+        this.state.playerDeck = [...this.state.playerDeck, artifact];
+        this.state.board = { ...this.state.board, "p-artifact": null };
+        this.state.playerArtifact = null;
+        this.addLog(`>> ${artifact.name} (equipo) destruido con ${card.name}, retorna al mazo.`);
+      }
+    }
   }
 
   moveToHand(slotId: SlotId): void {
@@ -478,9 +490,21 @@ export class DuelEngine implements DuelEngineInterface {
       }
     }
 
-    // ── ARTEFACTO: set playerArtifact ──
+    // ── ARTEFACTO: set playerArtifact + equipo binding ──
     if (card.type === "ARTEFACTO") {
       this.state.playerArtifact = card;
+      // For equipo artifacts, auto-equip to first available monster
+      if (card.artifactType === "equipo") {
+        const equipTargets: SlotId[] = ["p-mon-1", "p-mon-3", "p-mon-2"];
+        const targetSlot = equipTargets.find(s => this.state.board[s] !== null);
+        if (targetSlot) {
+          card.equippedTo = targetSlot;
+        } else {
+          this.addLog("Error: Necesitas un monstruo para equipar.");
+          this.commit();
+          return;
+        }
+      }
     }
 
     // ── PLACE CARD ON BOARD ──
@@ -659,6 +683,13 @@ export class DuelEngine implements DuelEngineInterface {
             newLog.push(...removeLogs);
             newLog.push(...fireOnAllyDestroy(this, pSlot, "player"));
             newLog.push(...fireOnEnemyDestroy(this, pSlot, "player"));
+            // Equipment destruction
+            const eqArtifact = newBoard["p-artifact"];
+            if (eqArtifact && eqArtifact.equippedTo === pSlot) {
+              newPlayerDeck = [...newPlayerDeck, eqArtifact];
+              newBoard = { ...newBoard, "p-artifact": null };
+              newLog.push(`>> ${eqArtifact.name} (equipo) destruido con ${pMon.name}.`);
+            }
           }
           if (ePrevented || pPrevented) {
             newLog.push(`>> ¡Empate! ${pMon.name} y ${eMon.name} (ATK:${pAtk}).`);
@@ -685,6 +716,13 @@ export class DuelEngine implements DuelEngineInterface {
               newLog.push(...removeLogs);
               newLog.push(...fireOnAllyDestroy(this, pSlot, "player"));
               newLog.push(...fireOnEnemyDestroy(this, pSlot, "player"));
+              // Equipment destruction
+              const eqArtifact = newBoard["p-artifact"];
+              if (eqArtifact && eqArtifact.equippedTo === pSlot) {
+                newPlayerDeck = [...newPlayerDeck, eqArtifact];
+                newBoard = { ...newBoard, "p-artifact": null };
+                newLog.push(`>> ${eqArtifact.name} (equipo) destruido con ${pMon.name}.`);
+              }
             }
           }
         }
@@ -779,6 +817,7 @@ export class DuelEngine implements DuelEngineInterface {
       playerTagTeamUsed: false,
       playerChainSummonAvailable: false,
       lastSummonSlot: null,
+      altarUsedThisTurn: {},
     };
     this.addLog(">> — Turno del Oponente —");
     this.commit();
@@ -789,6 +828,171 @@ export class DuelEngine implements DuelEngineInterface {
     setTimeout(() => this.enemyTurnStep1(), 800);
     // Step 2: Enemy attacks (staggered, schedules step 3 when done)
     setTimeout(() => this.enemyTurnStep2(), 2400);
+  }
+
+  // ──────────────────────────────────────────
+  // ALTAR ACTIVATION
+  // ──────────────────────────────────────────
+
+  activateAltar(slotId: SlotId): void {
+    // Only player altar slots
+    if (slotId !== "p-altar-luz" && slotId !== "p-altar-sombra") {
+      this.addLog("Error: Solo puedes activar altares propios.");
+      this.commit();
+      return;
+    }
+    // Only during player's turn
+    if (this.state.isEnemyTurn) {
+      this.addLog("Error: No puedes activar altares en el turno del rival.");
+      this.commit();
+      return;
+    }
+    const card = this.state.board[slotId];
+    if (!card) return;
+
+    // Check for activatable altar effects
+    const altarEffects = card.efecto_altar.filter(e => e.categoria && e.categoria !== "PASIVO");
+    if (altarEffects.length === 0) {
+      this.addLog("Error: Este altar no tiene efectos activables.");
+      this.commit();
+      return;
+    }
+
+    const effect = altarEffects[0]; // Use the first activatable effect
+    const categoria = effect.categoria!;
+
+    // For TURNO: check if already used this turn
+    if (categoria === "TURNO" && this.state.altarUsedThisTurn[slotId]) {
+      this.addLog("Error: Este altar ya fue activado este turno.");
+      this.commit();
+      return;
+    }
+
+    // Resolve the effect based on its type
+    this.resolveAltarEffect(effect, slotId);
+
+    // After resolving:
+    // ACTIVABLE and RESPUESTA: return card to bottom of deck, clear altar slot
+    if (categoria === "ACTIVABLE" || categoria === "RESPUESTA") {
+      this.state.playerDeck = [...this.state.playerDeck, card];
+      this.state.board = { ...this.state.board, [slotId]: null };
+      this.addLog(`>> ${card.name} retorna al fondo del mazo tras su activación.`);
+    }
+    // TURNO: mark as used this turn (card stays)
+    if (categoria === "TURNO") {
+      this.state.altarUsedThisTurn = { ...this.state.altarUsedThisTurn, [slotId]: true };
+    }
+
+    this.commit();
+  }
+
+  private resolveAltarEffect(effect: { type: string; scope: string; amount?: number; categoria?: string }, slotId: SlotId): void {
+    const card = this.state.board[slotId];
+    if (!card) return;
+
+    this.addLog(`>> ⚡ Altar ${card.name} activado (${effect.categoria})!`);
+
+    const col = slotId === "p-altar-luz" ? 1 : 3;
+
+    switch (effect.type) {
+      case "buff_atk": {
+        const amount = effect.amount ?? 2;
+        if (effect.scope === "self_lane") {
+          // Buff monsters in the same column
+          const monSlot = `p-mon-${col}` as SlotId;
+          if (this.state.board[monSlot]) {
+            this.modifyAtk(monSlot, amount);
+            this.addLog(`>> +${amount} ATK a ${this.state.board[monSlot]!.name} en columna ${col}.`);
+          }
+        } else if (effect.scope === "all_allies") {
+          for (const c of [1, 2, 3]) {
+            const ms = `p-mon-${c}` as SlotId;
+            if (this.state.board[ms]) {
+              this.modifyAtk(ms, amount);
+            }
+          }
+          this.addLog(`>> +${amount} ATK a todos tus monstruos.`);
+        } else {
+          // Default: self
+          const monSlot = `p-mon-${col}` as SlotId;
+          if (this.state.board[monSlot]) {
+            this.modifyAtk(monSlot, amount);
+          }
+        }
+        break;
+      }
+      case "debuff_atk": {
+        const amount = effect.amount ?? 2;
+        if (effect.scope === "enemy_lane") {
+          const eMonSlot = `e-mon-${col}` as SlotId;
+          if (this.state.board[eMonSlot]) {
+            const eCard = this.state.board[eMonSlot]!;
+            const key = `e-${eCard.name}`;
+            const cur = this.state.effects.atkReduced[key] || 0;
+            this.state.effects.atkReduced = { ...this.state.effects.atkReduced, [key]: cur + amount };
+            this.addLog(`>> -${amount} ATK a ${eCard.name} en columna ${col}.`);
+          }
+        } else if (effect.scope === "all_enemies") {
+          for (const c of [1, 2, 3]) {
+            const eMs = `e-mon-${c}` as SlotId;
+            if (this.state.board[eMs]) {
+              const eCard = this.state.board[eMs]!;
+              const key = `e-${eCard.name}`;
+              const cur = this.state.effects.atkReduced[key] || 0;
+              this.state.effects.atkReduced = { ...this.state.effects.atkReduced, [key]: cur + amount };
+            }
+          }
+          this.addLog(`>> -${amount} ATK a todos los monstruos rivales.`);
+        }
+        break;
+      }
+      case "direct_damage": {
+        const amount = effect.amount ?? 3;
+        this.dealDamage("enemy", amount);
+        this.addLog(`>> ${amount} daño directo al rival!`);
+        break;
+      }
+      case "lp_gain": {
+        const amount = effect.amount ?? 3;
+        this.heal("player", amount);
+        this.addLog(`>> +${amount} LP recuperados!`);
+        break;
+      }
+      case "draw": {
+        const amount = effect.amount ?? 1;
+        this.draw("player", amount);
+        this.addLog(`>> Robas ${amount} carta(s).`);
+        break;
+      }
+      case "negate": {
+        this.state.effects.negatedEffects = (this.state.effects.negatedEffects || 0) + 1;
+        this.addLog(`>> Efecto rival negado!`);
+        break;
+      }
+      case "move": {
+        this.addLog(`>> Elige un monstruo para mover (simplificado: efecto registrado).`);
+        break;
+      }
+      case "add_shield": {
+        if (effect.scope === "self_lane") {
+          const monSlot = `p-mon-${col}` as SlotId;
+          if (this.state.board[monSlot]) {
+            this.addShield(monSlot);
+            this.addLog(`>> Escudo añadido a ${this.state.board[monSlot]!.name}.`);
+          }
+        } else if (effect.scope === "all_allies") {
+          for (const c of [1, 2, 3]) {
+            const ms = `p-mon-${c}` as SlotId;
+            if (this.state.board[ms]) this.addShield(ms);
+          }
+          this.addLog(`>> Escudos añadidos a tus monstruos.`);
+        }
+        break;
+      }
+      default:
+        this.addLog(`>> Efecto ${effect.type} ejecutado (resolución básica).`);
+        break;
+    }
   }
 
   /** Surrender the duel. */
@@ -1520,6 +1724,7 @@ export class DuelEngine implements DuelEngineInterface {
       enemyTagTeamUsed: false,
       enemyChainSummonAvailable: false,
       lastSummonSlot: null,
+      altarUsedThisTurn: {},
     };
 
     this.commit();
@@ -1648,6 +1853,12 @@ export class DuelEngine implements DuelEngineInterface {
     // ECLIPSE dual-altar bonus
     if (colNum === 2 && card.type === "ECLIPSE" && luzAltar && sombraAltar) {
       atk += 4;
+    }
+
+    // Equipment artifact ATK bonus
+    const pArtifact = board["p-artifact"];
+    if (pArtifact && pArtifact.artifactType === "equipo" && pArtifact.equippedTo === slotId) {
+      atk += pArtifact.atk; // The artifact's ATK value serves as the buff amount
     }
 
     return { atk, penetrate, undestroyable, immuneEffectDestroy };

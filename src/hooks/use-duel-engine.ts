@@ -27,6 +27,7 @@ export interface UseDuelEngineReturn {
   laneChange: (fromSlot: SlotId, toSlot: SlotId) => void;
   specialSummonFromHand: (handIndex: number, slotId: SlotId) => void;
   placeArtifact: (handIndex: number) => void;
+  activateAltar: (slotId: SlotId) => void;
 }
 
 export function useDuelEngine(): UseDuelEngineReturn {
@@ -85,6 +86,7 @@ export function useDuelEngine(): UseDuelEngineReturn {
       playerChainSummonAvailable: false,
       enemyChainSummonAvailable: false,
       lastSummonSlot: null,
+      altarUsedThisTurn: {},
     };
   });
 
@@ -171,6 +173,11 @@ export function useDuelEngine(): UseDuelEngineReturn {
     [engine]
   );
 
+  const activateAltar = useCallback(
+    (slotId: SlotId) => { engine.activateAltar(slotId); },
+    [engine]
+  );
+
   return {
     state,
     engine,
@@ -189,5 +196,6 @@ export function useDuelEngine(): UseDuelEngineReturn {
     laneChange,
     specialSummonFromHand,
     placeArtifact,
+    activateAltar,
   };
 }

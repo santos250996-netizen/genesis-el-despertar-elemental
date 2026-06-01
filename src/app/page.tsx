@@ -116,9 +116,14 @@ function getTargetInfo(slotId: SlotId, card: CardData | null, board: Record<Slot
   const isSpecialSummon = card.type === "ECLIPSE" || card.flags.includes("isGenesis");
 
   // ARTEFACTO — solo va al slot de artefacto
-  if (card.type === "ARTEFACTO") {
+  if (card.type === "ARTEFACTO" || card.flags.includes("isArtifact")) {
     if (slotId !== "p-artifact") return { valid: false, type: "artifact" };
     if (board["p-artifact"]) return { valid: false, type: "artifact" };
+    // For equipo artifacts, need at least one player monster to equip to
+    if (card.artifactType === "equipo") {
+      const hasMon = !!board["p-mon-1"] || !!board["p-mon-3"] || !!board["p-mon-2"];
+      if (!hasMon) return { valid: false, type: "artifact" };
+    }
     return { valid: true, type: "artifact" };
   }
 
@@ -363,11 +368,15 @@ function CardView({
 
 // ============ CARD DETAIL SHEET ============
 
-function CardDetailSheet({ card, onClose }: { card: CardData; onClose: () => void }) {
+function CardDetailSheet({ card, onClose, isOnAltar, canActivateAltar, onActivateAltar }: { card: CardData; onClose: () => void; isOnAltar?: boolean; canActivateAltar?: boolean; onActivateAltar?: () => void }) {
   const frame = getCardFrameClasses(card);
   const artSrc = getArtSrc(card);
   const isGenesis = card.metodo_invocacion === "GENESIS";
   const typeLine = getTypeLine(card);
+
+  // Get altar category info
+  const altarCategoria = isOnAltar && card.efecto_altar.length > 0 ? card.efecto_altar[0]?.categoria : undefined;
+  const categoriaLabel = altarCategoria === "PASIVO" ? "🟢 Pasivo" : altarCategoria === "ACTIVABLE" ? "🔵 Activable" : altarCategoria === "TURNO" ? "🟡 1/Turno" : altarCategoria === "RESPUESTA" ? "🔴 Respuesta" : null;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center safe-bottom" onClick={onClose}>
@@ -416,7 +425,7 @@ function CardDetailSheet({ card, onClose }: { card: CardData; onClose: () => voi
             {card.efecto_altar.length > 0 && (
               <div>
                 <div className="text-[0.6rem] font-bold text-cyan-400 mb-0.5 drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)]">
-                  ♨ Efecto Altar
+                  ♨ Efecto Altar{categoriaLabel ? ` — ${categoriaLabel}` : ""}
                 </div>
                 {card.efecto_altar.map((eff, i) => (
                   <div key={`a-${i}`} className="text-[0.65rem] text-zinc-200 leading-relaxed drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)]">
@@ -427,6 +436,15 @@ function CardDetailSheet({ card, onClose }: { card: CardData; onClose: () => voi
             )}
             {card.efecto_monstruo.length === 0 && card.efecto_altar.length === 0 && (
               <p className="text-[0.7rem] text-zinc-400 italic drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)]">Sin efectos impresos.</p>
+            )}
+            {/* Altar Activation Button */}
+            {canActivateAltar && onActivateAltar && (
+              <button
+                onClick={(e) => { e.stopPropagation(); onActivateAltar(); }}
+                className="mt-3 w-full py-2 rounded-lg bg-amber-500 hover:bg-amber-400 active:bg-amber-300 text-black text-sm font-bold transition-colors cursor-pointer"
+              >
+                ⚡ Activar Efecto
+              </button>
             )}
           </div>
         </div>
@@ -459,6 +477,10 @@ function BoardSlot({
   justPlaced,
   artifactActive,
   enemyHighlight,
+  altarCategoria,
+  canActivateAltar,
+  onActivateAltar,
+  isEquippedWithArtifact,
 }: {
   card: CardData | null;
   label: string;
@@ -474,6 +496,10 @@ function BoardSlot({
   justPlaced?: boolean;
   artifactActive?: boolean;
   enemyHighlight?: "summon" | "attack" | "action" | null;
+  altarCategoria?: string;
+  canActivateAltar?: boolean;
+  onActivateAltar?: () => void;
+  isEquippedWithArtifact?: boolean;
 }) {
   const isSacrifice = targetInfo.type === "sacrifice" && targetInfo.valid;
   const isConsume = targetInfo.type === "consume" && targetInfo.valid;
@@ -509,6 +535,28 @@ function BoardSlot({
       )}
       {hasAttacked && (
         <div className="absolute top-0 left-0 text-[0.35rem] bg-zinc-600/90 text-white px-0.5 rounded-br font-bold z-10">✓</div>
+      )}
+      {altarCategoria && card && (
+        <div className={`absolute top-0 left-0 text-[0.35rem] font-bold px-0.5 rounded-br z-10 ${
+          altarCategoria === "PASIVO" ? "bg-emerald-600/90 text-white" :
+          altarCategoria === "ACTIVABLE" ? "bg-blue-600/90 text-white" :
+          altarCategoria === "TURNO" ? "bg-amber-600/90 text-white" :
+          altarCategoria === "RESPUESTA" ? "bg-red-600/90 text-white animate-pulse" : "bg-zinc-600/90 text-white"
+        }`}>
+          {altarCategoria === "PASIVO" ? "🟢" : altarCategoria === "ACTIVABLE" ? "🔵" : altarCategoria === "TURNO" ? "🟡" : "🔴"}
+        </div>
+      )}
+      {canActivateAltar && onActivateAltar && (
+        <button
+          className="absolute top-0 right-0 z-20 bg-amber-500 hover:bg-amber-400 active:bg-amber-300 text-black text-[0.4rem] font-bold px-0.5 rounded-bl cursor-pointer transition-colors"
+          onClick={(e) => { e.stopPropagation(); onActivateAltar(); }}
+          aria-label="Activar altar"
+        >
+          ⚡
+        </button>
+      )}
+      {isEquippedWithArtifact && (
+        <div className="absolute top-0 right-0 text-[0.35rem] bg-violet-600/90 text-white px-0.5 rounded-bl font-bold z-10">⚔</div>
       )}
       {card ? (
         <div
@@ -846,7 +894,7 @@ function SetupScreen({ onSelect, onEditDeck, onTutorial, deckSize }: { onSelect:
 
 // ============ GAME SCREEN ============
 
-function GameScreen({ state, onSelectCard, onPlaceCard, onAttackAll, onEndTurn, onSurrender, onReset, computePlayerMonAtk, computeEnemyMonAtk, onTagTeam, onChainSummon, onLaneChange, onPlaceArtifact }: {
+function GameScreen({ state, onSelectCard, onPlaceCard, onAttackAll, onEndTurn, onSurrender, onReset, computePlayerMonAtk, computeEnemyMonAtk, onTagTeam, onChainSummon, onLaneChange, onPlaceArtifact, onActivateAltar }: {
   state: GameState;
   onSelectCard: (idx: number) => void;
   onPlaceCard: (slotId: SlotId) => void;
@@ -860,6 +908,7 @@ function GameScreen({ state, onSelectCard, onPlaceCard, onAttackAll, onEndTurn, 
   onChainSummon: (handIndex: number, slotId: SlotId) => void;
   onLaneChange: (fromSlot: SlotId, toSlot: SlotId) => void;
   onPlaceArtifact: (handIndex: number) => void;
+  onActivateAltar: (slotId: SlotId) => void;
 }) {
   const [detailCard, setDetailCard] = useState<CardData | null>(null);
   const [playerLpFlash, setPlayerLpFlash] = useState<"damage" | "heal" | null>(null);
@@ -954,7 +1003,10 @@ function GameScreen({ state, onSelectCard, onPlaceCard, onAttackAll, onEndTurn, 
     if (c.type === "CORRUPCION") return !b["p-altar-sombra"] || !b["p-mon-3"] ? "Necesitas Altar Sombra + monstruo en Z3" : "☣ Toca Zona 3 para sacrificar";
     if (c.type === "ECLIPSE") return !b["p-altar-luz"] || !b["p-altar-sombra"] ? "Necesitas ambos Altares" : "Toca la Zona Central";
     if (c.flags.includes("isGenesis")) return !b["p-altar-luz"] || !b["p-altar-sombra"] ? "Necesitas ambos Altares" : "Toca M2 — consume ambos Altares";
-    if (c.type === "ARTEFACTO") return "🛡 Toca la ranura de Artefacto";
+    if (c.type === "ARTEFACTO") {
+      if (c.artifactType === "equipo") return "⚔ Toca la ranura de Artefacto (necesitas un monstruo para equipar)";
+      return "🛡 Toca la ranura de Artefacto";
+    }
     return "Toca una zona del tablero";
   };
 
@@ -1039,15 +1091,15 @@ function GameScreen({ state, onSelectCard, onPlaceCard, onAttackAll, onEndTurn, 
         {/* Row 4: Player Monsters (blue tint) */}
         <div className="col-span-3 bg-blue-950/10 rounded -mx-0.5 px-0.5">
           <div className="grid grid-cols-3 gap-0.5">
-            <BoardSlot card={b["p-mon-1"]} slotId="p-mon-1" label="M1" computedAtk={pAtk("p-mon-1")} targetInfo={getTargetInfo("p-mon-1", selectedCard, b, state.summonedThisTurn)} isPlayerSlot hasAltarBonus={luzActive} attackedSlots={state.attackedThisTurn} noEffectDestroy={state.effects.noEffectDestroy} onClick={() => handleSlotClick("p-mon-1")} onDetail={b["p-mon-1"] ? () => setDetailCard(b["p-mon-1"]!) : undefined} justPlaced={justPlacedSlots.has("p-mon-1")} />
-            <BoardSlot card={b["p-mon-2"]} slotId="p-mon-2" label="M2" computedAtk={pAtk("p-mon-2")} targetInfo={getTargetInfo("p-mon-2", selectedCard, b, state.summonedThisTurn)} isPlayerSlot hasAltarBonus={false} attackedSlots={state.attackedThisTurn} noEffectDestroy={state.effects.noEffectDestroy} onClick={() => handleSlotClick("p-mon-2")} onDetail={b["p-mon-2"] ? () => setDetailCard(b["p-mon-2"]!) : undefined} justPlaced={justPlacedSlots.has("p-mon-2")} />
-            <BoardSlot card={b["p-mon-3"]} slotId="p-mon-3" label="M3" computedAtk={pAtk("p-mon-3")} targetInfo={getTargetInfo("p-mon-3", selectedCard, b, state.summonedThisTurn)} isPlayerSlot hasAltarBonus={sombraActive} attackedSlots={state.attackedThisTurn} noEffectDestroy={state.effects.noEffectDestroy} onClick={() => handleSlotClick("p-mon-3")} onDetail={b["p-mon-3"] ? () => setDetailCard(b["p-mon-3"]!) : undefined} justPlaced={justPlacedSlots.has("p-mon-3")} />
+            <BoardSlot card={b["p-mon-1"]} slotId="p-mon-1" label="M1" computedAtk={pAtk("p-mon-1")} targetInfo={getTargetInfo("p-mon-1", selectedCard, b, state.summonedThisTurn)} isPlayerSlot hasAltarBonus={luzActive} attackedSlots={state.attackedThisTurn} noEffectDestroy={state.effects.noEffectDestroy} onClick={() => handleSlotClick("p-mon-1")} onDetail={b["p-mon-1"] ? () => setDetailCard(b["p-mon-1"]!) : undefined} justPlaced={justPlacedSlots.has("p-mon-1")} isEquippedWithArtifact={!!b["p-artifact"] && b["p-artifact"]?.equippedTo === "p-mon-1"} />
+            <BoardSlot card={b["p-mon-2"]} slotId="p-mon-2" label="M2" computedAtk={pAtk("p-mon-2")} targetInfo={getTargetInfo("p-mon-2", selectedCard, b, state.summonedThisTurn)} isPlayerSlot hasAltarBonus={false} attackedSlots={state.attackedThisTurn} noEffectDestroy={state.effects.noEffectDestroy} onClick={() => handleSlotClick("p-mon-2")} onDetail={b["p-mon-2"] ? () => setDetailCard(b["p-mon-2"]!) : undefined} justPlaced={justPlacedSlots.has("p-mon-2")} isEquippedWithArtifact={!!b["p-artifact"] && b["p-artifact"]?.equippedTo === "p-mon-2"} />
+            <BoardSlot card={b["p-mon-3"]} slotId="p-mon-3" label="M3" computedAtk={pAtk("p-mon-3")} targetInfo={getTargetInfo("p-mon-3", selectedCard, b, state.summonedThisTurn)} isPlayerSlot hasAltarBonus={sombraActive} attackedSlots={state.attackedThisTurn} noEffectDestroy={state.effects.noEffectDestroy} onClick={() => handleSlotClick("p-mon-3")} onDetail={b["p-mon-3"] ? () => setDetailCard(b["p-mon-3"]!) : undefined} justPlaced={justPlacedSlots.has("p-mon-3")} isEquippedWithArtifact={!!b["p-artifact"] && b["p-artifact"]?.equippedTo === "p-mon-3"} />
           </div>
         </div>
         {/* Row 5: Player Altars + Artifact */}
-        <BoardSlot card={b["p-altar-luz"]} slotId="p-altar-luz" label="Altar Celestial" targetInfo={getTargetInfo("p-altar-luz", selectedCard, b, state.summonedThisTurn)} isPlayerSlot hasAltarBonus={false} onClick={() => handleSlotClick("p-altar-luz")} onDetail={b["p-altar-luz"] ? () => setDetailCard(b["p-altar-luz"]!) : undefined} />
+        <BoardSlot card={b["p-altar-luz"]} slotId="p-altar-luz" label="Altar Celestial" targetInfo={getTargetInfo("p-altar-luz", selectedCard, b, state.summonedThisTurn)} isPlayerSlot hasAltarBonus={false} onClick={() => handleSlotClick("p-altar-luz")} onDetail={b["p-altar-luz"] ? () => setDetailCard(b["p-altar-luz"]!) : undefined} altarCategoria={b["p-altar-luz"]?.efecto_altar?.[0]?.categoria} canActivateAltar={!!b["p-altar-luz"] && b["p-altar-luz"].efecto_altar.some(e => e.categoria && e.categoria !== "PASIVO") && !state.isEnemyTurn && !state.altarUsedThisTurn["p-altar-luz"]} onActivateAltar={() => onActivateAltar("p-altar-luz")} />
         <BoardSlot card={b["p-artifact"]} slotId="p-artifact" label="🛡" targetInfo={getTargetInfo("p-artifact", selectedCard, b, state.summonedThisTurn)} isPlayerSlot hasAltarBonus={false} artifactActive={!!b["p-artifact"]} onClick={() => handleSlotClick("p-artifact")} onDetail={b["p-artifact"] ? () => setDetailCard(b["p-artifact"]!) : undefined} justPlaced={justPlacedSlots.has("p-artifact")} />
-        <BoardSlot card={b["p-altar-sombra"]} slotId="p-altar-sombra" label="Altar Umbral" targetInfo={getTargetInfo("p-altar-sombra", selectedCard, b, state.summonedThisTurn)} isPlayerSlot hasAltarBonus={false} onClick={() => handleSlotClick("p-altar-sombra")} onDetail={b["p-altar-sombra"] ? () => setDetailCard(b["p-altar-sombra"]!) : undefined} />
+        <BoardSlot card={b["p-altar-sombra"]} slotId="p-altar-sombra" label="Altar Umbral" targetInfo={getTargetInfo("p-altar-sombra", selectedCard, b, state.summonedThisTurn)} isPlayerSlot hasAltarBonus={false} onClick={() => handleSlotClick("p-altar-sombra")} onDetail={b["p-altar-sombra"] ? () => setDetailCard(b["p-altar-sombra"]!) : undefined} altarCategoria={b["p-altar-sombra"]?.efecto_altar?.[0]?.categoria} canActivateAltar={!!b["p-altar-sombra"] && b["p-altar-sombra"].efecto_altar.some(e => e.categoria && e.categoria !== "PASIVO") && !state.isEnemyTurn && !state.altarUsedThisTurn["p-altar-sombra"]} onActivateAltar={() => onActivateAltar("p-altar-sombra")} />
       </div>
 
       {/* ── Hint + Actions row ── */}
@@ -1128,7 +1180,13 @@ function GameScreen({ state, onSelectCard, onPlaceCard, onAttackAll, onEndTurn, 
       <GameLog log={state.log} />
 
       {/* ── Card Detail Overlay ── */}
-      {detailCard && <CardDetailSheet card={detailCard} onClose={() => setDetailCard(null)} />}
+      {detailCard && (() => {
+        // Check if the detail card is on an altar
+        const isOnAltar = (b["p-altar-luz"] === detailCard) || (b["p-altar-sombra"] === detailCard);
+        const altarSlot: SlotId | null = b["p-altar-luz"] === detailCard ? "p-altar-luz" : b["p-altar-sombra"] === detailCard ? "p-altar-sombra" : null;
+        const canAltar = isOnAltar && altarSlot !== null && !!detailCard.efecto_altar.some(e => e.categoria && e.categoria !== "PASIVO") && !state.isEnemyTurn && !state.altarUsedThisTurn[altarSlot];
+        return <CardDetailSheet card={detailCard} onClose={() => setDetailCard(null)} isOnAltar={isOnAltar} canActivateAltar={canAltar} onActivateAltar={altarSlot ? () => { onActivateAltar(altarSlot); setDetailCard(null); } : undefined} />;
+      })()}
     </div>
   );
 }
@@ -1183,7 +1241,7 @@ function TutorialScreen({ onClose }: { onClose: () => void }) {
 // ============ MAIN ============
 
 export default function Home() {
-  const { state, startGame, selectCard, placeCard, attackAll, endTurn, surrender, resetGame, computePlayerMonAtk, computeEnemyMonAtk, tagTeamSwap, chainSummon, laneChange, specialSummonFromHand, placeArtifact } = useDuelEngine();
+  const { state, startGame, selectCard, placeCard, attackAll, endTurn, surrender, resetGame, computePlayerMonAtk, computeEnemyMonAtk, tagTeamSwap, chainSummon, laneChange, specialSummonFromHand, placeArtifact, activateAltar } = useDuelEngine();
   const [editingDeck, setEditingDeck] = useState(false);
   const [customDeck, setCustomDeck] = useState<CardData[] | null>(null);
   const [showTutorial, setShowTutorial] = useState(false);
@@ -1235,6 +1293,7 @@ export default function Home() {
         onChainSummon={chainSummon}
         onLaneChange={laneChange}
         onPlaceArtifact={placeArtifact}
+        onActivateAltar={activateAltar}
       />
     </div>
   );

@@ -1,6 +1,7 @@
 // ============ MAZO BASE: LUZ Y OSCURIDAD ============
-// 16 cartas exactas — Atributos CELESTIAL y UMBRAL
-// Distribución: 10 NORMAL, 3 ANOMALÍA, 1 CORRUPCIÓN, 1 ECLIPSE, 1 GÉNESIS
+// 16 cartas de monstruos + 4 artefactos = 20 cartas
+// Atributos CELESTIAL y UMBRAL
+// Distribución: 10 NORMAL, 3 ANOMALÍA, 1 CORRUPCIÓN, 1 ECLIPSE, 1 GÉNESIS + 4 ARTEFACTOS
 // Razas: CELESTIAL → GENS, ÁNIMA, FÁBULA | UMBRAL → NECRO, CLASTO, SECAT
 
 import type { CartaMaestra, CardData } from "@/engine/types";
@@ -41,6 +42,7 @@ const CELESTIAL_CARDS: CartaMaestra[] = [
         scope: "self_lane",
         condition: "none",
         desc: "Las cartas CELESTIAL en tu carril ganan +2 ATK.",
+        categoria: "PASIVO",
       },
     ],
   },
@@ -72,6 +74,7 @@ const CELESTIAL_CARDS: CartaMaestra[] = [
         scope: "self_lp",
         condition: "none",
         desc: "Una vez por turno, si invocas un CELESTIAL, ganas 3 LP.",
+        categoria: "TURNO",
       },
     ],
   },
@@ -102,6 +105,7 @@ const CELESTIAL_CARDS: CartaMaestra[] = [
         scope: "self_lane",
         condition: "none",
         desc: "Los monstruos en este carril no pueden ser destruidos por efectos.",
+        categoria: "PASIVO",
       },
     ],
   },
@@ -134,6 +138,7 @@ const CELESTIAL_CARDS: CartaMaestra[] = [
         scope: "self_lane",
         condition: "none",
         desc: "Cuando un monstruo CELESTIAL es invocado en este carril, gana 1 contador_escudo.",
+        categoria: "PASIVO",
       },
     ],
   },
@@ -164,6 +169,7 @@ const CELESTIAL_CARDS: CartaMaestra[] = [
         scope: "self_lane",
         condition: "none",
         desc: "Al inicio de tu turno, los monstruos en este carril ganan +2 ATK.",
+        categoria: "PASIVO",
       },
     ],
   },
@@ -193,6 +199,7 @@ const CELESTIAL_CARDS: CartaMaestra[] = [
         scope: "enemy_lane",
         condition: "none",
         desc: "Niega el primer efecto que active el oponente en este carril cada turno.",
+        categoria: "TURNO",
       },
     ],
   },
@@ -224,6 +231,7 @@ const CELESTIAL_CARDS: CartaMaestra[] = [
         scope: "self_lane",
         condition: "none",
         desc: "Una vez por turno, puedes mover un monstruo entre carriles.",
+        categoria: "TURNO",
       },
     ],
   },
@@ -254,6 +262,7 @@ const CELESTIAL_CARDS: CartaMaestra[] = [
         scope: "enemy_lane",
         condition: "none",
         desc: "Reduce el ATK de los monstruos enemigos en el carril opuesto en 3.",
+        categoria: "PASIVO",
       },
     ],
   },
@@ -293,6 +302,7 @@ const UMBRAL_CARDS: CartaMaestra[] = [
         scope: "enemy_lane",
         condition: "none",
         desc: "Los monstruos enemigos destruidos en este carril no activan sus efectos al morir.",
+        categoria: "PASIVO",
       },
     ],
   },
@@ -323,6 +333,8 @@ const UMBRAL_CARDS: CartaMaestra[] = [
         scope: "enemy_lane",
         condition: "none",
         desc: "Cuando un monstruo enemigo ataca en este carril, pierde 2 ATK.",
+        categoria: "RESPUESTA",
+        respuesta_trigger: "enemy_attack",
       },
     ],
   },
@@ -354,6 +366,7 @@ const UMBRAL_CARDS: CartaMaestra[] = [
         scope: "opponent_lp",
         condition: "none",
         desc: "Una vez por turno, si un monstruo UMBRAL es destruido en este carril, inflige 3 daño directo.",
+        categoria: "TURNO",
       },
     ],
   },
@@ -386,6 +399,7 @@ const UMBRAL_CARDS: CartaMaestra[] = [
         scope: "self_lane",
         condition: "none",
         desc: "Los monstruos en este carril ganan +2 ATK al atacar.",
+        categoria: "PASIVO",
       },
     ],
   },
@@ -417,6 +431,7 @@ const UMBRAL_CARDS: CartaMaestra[] = [
         scope: "enemy_lane",
         condition: "none",
         desc: "Al inicio de tu turno, el monstruo enemigo con menor ATK en el carril opuesto pierde 3 ATK.",
+        categoria: "PASIVO",
       },
     ],
   },
@@ -447,6 +462,7 @@ const UMBRAL_CARDS: CartaMaestra[] = [
         scope: "all_enemies",
         condition: "none",
         desc: "Ambos altares otorgan sus efectos simultáneamente. Los monstruos enemigos pierden 2 ATK.",
+        categoria: "PASIVO",
       },
     ],
   },
@@ -479,6 +495,7 @@ const UMBRAL_CARDS: CartaMaestra[] = [
         scope: "self_lane",
         condition: "none",
         desc: "Una vez por turno, si un monstruo UMBRAL ataca en este carril, gana +3 ATK.",
+        categoria: "TURNO",
       },
     ],
   },
@@ -515,6 +532,7 @@ const UMBRAL_CARDS: CartaMaestra[] = [
         scope: "all_allies",
         condition: "none",
         desc: "Si Oblivion fuera altar, otorga inmunidad de destrucción a todos los monstruos de tu campo.",
+        categoria: "PASIVO",
       },
       {
         trigger: "on_summon",
@@ -522,8 +540,109 @@ const UMBRAL_CARDS: CartaMaestra[] = [
         scope: "self_lane",
         condition: "none",
         desc: "Al colocarse como altar, todos los monstruos del carril ganan 1 contador_escudo.",
+        categoria: "PASIVO",
       },
     ],
+  },
+];
+
+// ═══════════════════════════════════════════════════════════════
+// ARTEFACTOS — 4 CARTAS (2 campo + 2 equipo)
+// ═══════════════════════════════════════════════════════════════
+
+const ARTEFACTO_CARDS: CartaMaestra[] = [
+
+  // ─── ARTEFACTO CAMPO (Magia de Campo: efecto global permanente) ───
+
+  {
+    id: "ART-017",
+    nombre: "Cruzada Celestial",
+    raza_tipo: "GENS" as const,
+    atributo: "CELESTIAL",
+    metodo_invocacion: "NORMAL",
+    atk: 0,
+    es_altar: false,
+    es_artefacto: true,
+    artefacto_tipo: "campo",
+    contador_escudo: 0,
+    efecto_monstruo: [],
+    efecto_altar: [{
+      trigger: "passive",
+      type: "buff_atk",
+      amount: 1,
+      scope: "all_allies",
+      condition: "none",
+      desc: "Los monstruos CELESTIAL ganan +1 ATK. Los monstruos UMBRAL pierden -1 ATK.",
+      categoria: "PASIVO",
+    }],
+  },
+
+  {
+    id: "ART-018",
+    nombre: "Tierra Baldía",
+    raza_tipo: "SECAT" as const,
+    atributo: "UMBRAL",
+    metodo_invocacion: "NORMAL",
+    atk: 0,
+    es_altar: false,
+    es_artefacto: true,
+    artefacto_tipo: "campo",
+    contador_escudo: 0,
+    efecto_monstruo: [],
+    efecto_altar: [{
+      trigger: "passive",
+      type: "debuff_atk",
+      amount: 1,
+      scope: "all_enemies",
+      condition: "none",
+      desc: "Todos los monstruos pierden 1 ATK. Los contadores de escudo no se pueden activar.",
+      categoria: "PASIVO",
+    }],
+  },
+
+  // ─── ARTEFACTO EQUIPO (Carta de Equipo: se vincula a un monstruo) ───
+
+  {
+    id: "ART-019",
+    nombre: "Espada del Alba",
+    raza_tipo: "GENS" as const,
+    atributo: "CELESTIAL",
+    metodo_invocacion: "NORMAL",
+    atk: 0,
+    es_altar: false,
+    es_artefacto: true,
+    artefacto_tipo: "equipo",
+    contador_escudo: 0,
+    efecto_monstruo: [{
+      trigger: "passive",
+      type: "buff_atk",
+      amount: 4,
+      scope: "self",
+      condition: "none",
+      desc: "El monstruo equipado gana +4 ATK.",
+    }],
+    efecto_altar: [],
+  },
+
+  {
+    id: "ART-020",
+    nombre: "Escudo Umbral",
+    raza_tipo: "NECRO" as const,
+    atributo: "UMBRAL",
+    metodo_invocacion: "NORMAL",
+    atk: 0,
+    es_altar: false,
+    es_artefacto: true,
+    artefacto_tipo: "equipo",
+    contador_escudo: 0,
+    efecto_monstruo: [{
+      trigger: "passive",
+      type: "prevent_destroy",
+      scope: "self",
+      condition: "none",
+      desc: "El monstruo equipado no puede ser destruido en combate (solo pierdes la diferencia de LP).",
+    }],
+    efecto_altar: [],
   },
 ];
 
@@ -535,6 +654,7 @@ const UMBRAL_CARDS: CartaMaestra[] = [
 export const ALL_CARDS_MAESTRA: CartaMaestra[] = [
   ...CELESTIAL_CARDS,
   ...UMBRAL_CARDS,
+  ...ARTEFACTO_CARDS,
 ];
 
 /** Mapa de id → CartaMaestra */

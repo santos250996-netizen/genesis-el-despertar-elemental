@@ -36,6 +36,20 @@ export type MetodoInvocacion =
   | "ECLIPSE"     // Requiere ambos altares activos
   | "GENESIS";    // Requiere ambos altares, los consume al invocar
 
+/** Categoría de efecto de altar — paralelo a Magias/Trampas YGO */
+export type CategoriaAltar =
+  | "PASIVO"      // Magia Continua: siempre activo, sin botón
+  | "ACTIVABLE"   // Magia Normal: botón activar, se devuelve al mazo al usar
+  | "TURNO"       // Magia Continua + Ignición: botón 1/turno, permanece
+  | "RESPUESTA";  // Trampa: botón con condición, se devuelve al mazo al usar
+
+/** Tipo de artefacto */
+export type ArtefactoTipo =
+  | "campo"       // Magia de Campo: efecto global permanente
+  | "equipo"      // Carta de Equipo: se vincula a un monstruo
+  | "global"      // Efecto global (legacy compatibility)
+  | "intercepcion"; // Intercepta ataques directos
+
 // ═══════════════════════════════════════════════════════════════
 // SISTEMA DE EFECTOS DECLARATIVOS (Opción 1C — Híbrida)
 // ═══════════════════════════════════════════════════════════════
@@ -108,7 +122,7 @@ export interface EfectoDescriptor {
   trigger: TriggerType;
   /** Qué hace */
   type: EfectoType;
-  /** Magnitud del efecto (+300 ATK, -400 ATK, 200 daño, etc.) */
+  /** Magnitud del efecto (+2 ATK, -3 ATK, 3 daño, etc.) */
   amount?: number;
   /** Quién recibe el efecto */
   scope: ScopeType;
@@ -116,6 +130,10 @@ export interface EfectoDescriptor {
   condition?: ConditionType;
   /** Descripción legible para la UI */
   desc: string;
+  /** Categoría de efecto altar (solo relevante para efecto_altar) */
+  categoria?: CategoriaAltar;
+  /** Para RESPUESTA: qué evento del enemigo la dispara */
+  respuesta_trigger?: "enemy_attack" | "enemy_summon" | "enemy_altar_activate" | "ally_destroy";
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -143,6 +161,10 @@ export interface CartaMaestra {
   efecto_monstruo: EfectoDescriptor[];
   /** Efecto que se activa cuando la carta está en modo altar (es_altar = true) */
   efecto_altar: EfectoDescriptor[];
+  /** Si es true, esta carta es un Artefacto (no un monstruo) */
+  es_artefacto?: boolean;
+  /** Tipo de artefacto: campo (global) o equipo (vinculado a monstruo) */
+  artefacto_tipo?: ArtefactoTipo;
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -342,8 +364,10 @@ export interface CardData {
   effects: { trigger: string; desc: string; id?: string }[];
   flags: string[];
   alsoMatches?: string[];
-  /** @deprecated Legacy ARTEFACTO field */
-  artifactType?: "global" | "intercepcion";
+  /** Tipo de artefacto (campo=global, equipo=vinculado a monstruo) */
+  artifactType?: ArtefactoTipo;
+  /** Para equipo: slot del monstruo equipado */
+  equippedTo?: SlotId;
   // ── Campos nuevos de CartaMaestra ──
   _cartaMaestra: CartaMaestra;
   raza_tipo: RazaTipo;
@@ -383,8 +407,13 @@ function generarFlags(carta: CartaMaestra): string[] {
   if (carta.metodo_invocacion === "CORRUPCION") flags.push("isCorruption");
   if (carta.metodo_invocacion === "ANOMALIA") flags.push("isAnomaly");
   if (carta.es_altar) flags.push("isAltar");
-  // Las cartas normales que pueden ir a altar también son elementales
-  flags.push("isElemental");
+  if (carta.es_artefacto) {
+    flags.push("isArtifact");
+    flags.push(`isArtifact_${carta.artefacto_tipo}`);
+  } else {
+    // Las cartas normales que pueden ir a altar también son elementales
+    flags.push("isElemental");
+  }
   return flags;
 }
 
@@ -414,6 +443,7 @@ export function cartaToCardData(carta: CartaMaestra): CardData {
     contador_escudo: carta.contador_escudo,
     efecto_monstruo: carta.efecto_monstruo,
     efecto_altar: carta.efecto_altar,
+    artifactType: carta.artefacto_tipo,
   };
 }
 
@@ -503,6 +533,8 @@ export interface GameState {
   playerChainSummonAvailable: boolean;
   enemyChainSummonAvailable: boolean;
   lastSummonSlot: SlotId | null;
+  /** Altares activados este turno (slotId → true) para límite 1/turno */
+  altarUsedThisTurn: Record<string, boolean>;
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -544,4 +576,6 @@ export interface DuelEngine {
   compensationDraw(target: "player" | "enemy"): void;
   addShield(slotId: SlotId): void;
   consumeShield(slotId: SlotId): boolean;
+  /** Activar efecto de altar (ACTIVABLE/TURNO/RESPUESTA) */
+  activateAltar(slotId: SlotId): void;
 }
