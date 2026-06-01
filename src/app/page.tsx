@@ -150,9 +150,11 @@ function getTargetInfo(slotId: SlotId, card: CardData | null, board: Record<Slot
   }
   // Column 2: SOLO Eclipse y Genesis — ningún otro tipo puede ir ahí
   if (slotId === "p-mon-2") return { valid: false, type: "place" };
-  if (!slotId.startsWith("p-")) return { valid: false, type: "place" };
-  // Normal summon limit only for monster zones M1 and M3 (NOT altars)
-  if (slotId.startsWith("p-mon-") && !isSpecialSummon && summonedThisTurn >= 1) return { valid: false, type: "place" };
+  // Solo slots de monstruo (p-mon-1, p-mon-3) aceptan invocación normal
+  // Los altares (p-altar-luz, p-altar-sombra) y artefacto (p-artifact) NO aceptan monstruos directamente
+  if (slotId !== "p-mon-1" && slotId !== "p-mon-3") return { valid: false, type: "place" };
+  // Normal summon limit
+  if (!isSpecialSummon && summonedThisTurn >= 1) return { valid: false, type: "place" };
   return { valid: true, type: "place" };
 }
 
