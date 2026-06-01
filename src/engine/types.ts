@@ -460,13 +460,21 @@ function efectosToLegacy(efectos: EfectoDescriptor[]): { trigger: string; desc: 
 
 /** Convierte CartaMaestra a CardData para compatibilidad con el motor actual */
 export function cartaToCardData(carta: CartaMaestra): CardData {
+  const cardType = metodoToCardType(carta);
+  // Las cartas con método especial también deben aparecer en el filtro de su atributo
+  const alsoMatches: string[] = [];
+  if (!carta.es_artefacto && carta.atributo && cardType !== carta.atributo) {
+    alsoMatches.push(carta.atributo);
+  }
+
   return {
     id: idToNumber(carta.id),
     name: carta.nombre,
-    type: metodoToCardType(carta),
+    type: cardType,
     atk: carta.atk,
     effects: efectosToLegacy([...carta.efecto_monstruo, ...carta.efecto_altar]),
     flags: generarFlags(carta),
+    alsoMatches: alsoMatches.length > 0 ? alsoMatches : undefined,
     // Campos nuevos
     _cartaMaestra: carta,
     raza_tipo: carta.raza_tipo,

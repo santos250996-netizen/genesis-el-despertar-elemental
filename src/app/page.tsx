@@ -791,14 +791,14 @@ function saveDeckToStorage(deck: CardData[]) {
   localStorage.setItem("genesis-custom-deck", JSON.stringify(deck.map((c) => c.name)));
 }
 
-const ALL_TYPE_KEYS: ("ALL" | CardType)[] = ["ALL", "CELESTIAL", "UMBRAL", "FULGUR", "AURA", "ABIS", "FOSO", "ECLIPSE", "CORRUPCION", "ANOMALIA", "GENESIS", "ARTEFACTO"];
+const ALL_TYPE_KEYS: ("ALL" | CardType)[] = ["ALL", "CELESTIAL", "UMBRAL", "FULGUR", "AURA", "ABIS", "FOSO", "SUBTERRANEO", "ECLIPSE", "CORRUPCION", "ANOMALIA", "GENESIS", "ARTEFACTO"];
 
 function DeckEditor({ onDone }: { onDone: (deck: CardData[]) => void }) {
   const [deck, setDeck] = useState<CardData[]>(loadDeckFromStorage);
   const [filter, setFilter] = useState<string>("ALL");
   const [detailCard, setDetailCard] = useState<CardData | null>(null);
 
-  const filtered = filter === "ALL" ? ALL_CARDS_ARRAY : ALL_CARDS_ARRAY.filter((c) => c.type === filter);
+  const filtered = filter === "ALL" ? ALL_CARDS_ARRAY : ALL_CARDS_ARRAY.filter((c) => c.type === filter || c.alsoMatches?.includes(filter));
   const copyCount = (name: string) => deck.filter((c) => c.name === name).length;
   const canAdd = deck.length < DECK_MAX;
   const canStart = deck.length >= DECK_MIN && deck.length <= DECK_MAX;
