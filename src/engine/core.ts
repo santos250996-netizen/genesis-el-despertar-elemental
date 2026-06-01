@@ -1029,7 +1029,7 @@ export class DuelEngine implements DuelEngineInterface {
       const mon1Atk = board["e-mon-1"] ? board["e-mon-1"]!.atk : 0;
       const mon3Atk = board["e-mon-3"] ? board["e-mon-3"]!.atk : 0;
       const weakestSlotAtk = Math.min(mon1Atk, mon3Atk);
-      if (c.atk >= weakestSlotAtk + 3) {
+      if (c.atk >= weakestSlotAtk + 5) {
         score = 40 + c.atk; // Worth upgrading
       } else {
         score = 5; // Not worth playing yet
@@ -1050,14 +1050,14 @@ export class DuelEngine implements DuelEngineInterface {
     // If player has few cards in hand, cards with discard effects are less useful
     if (playerHand.length <= 1) {
       // Slightly boost pure ATK monsters
-      if (c.atk >= 13) score += 5;
+      if (c.atk >= 11) score += 5;
     }
 
     // Prefer Genesis-compatible cards when both altars are nearly ready
     if (hasLuzAltar && !hasSombraAltar) {
       // One altar missing — prefer energy to complete
       // (handled by energy scoring above, but slightly boost strong elementals too)
-      if (c.atk >= 14) score += 3;
+      if (c.atk >= 12) score += 3;
     }
 
     // Small random factor so AI isn't perfectly predictable
@@ -1166,11 +1166,11 @@ export class DuelEngine implements DuelEngineInterface {
       // All slots full: try to upgrade the weakest if significantly better
       const mon1Atk = newBoard["e-mon-1"]!.atk;
       const mon3Atk = newBoard["e-mon-3"]!.atk;
-      if (c.atk >= mon1Atk + 3 && c.atk >= mon3Atk + 3) {
+      if (c.atk >= mon1Atk + 5 && c.atk >= mon3Atk + 5) {
         target = mon1Atk <= mon3Atk ? "e-mon-1" : "e-mon-3";
-      } else if (c.atk >= mon1Atk + 3) {
+      } else if (c.atk >= mon1Atk + 5) {
         target = "e-mon-1";
-      } else if (c.atk >= mon3Atk + 3) {
+      } else if (c.atk >= mon3Atk + 5) {
         target = "e-mon-3";
       }
     }
