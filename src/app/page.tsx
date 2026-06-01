@@ -38,10 +38,21 @@ function getCardFrameClasses(card: CardData): {
   extraClass: string;
   style: React.CSSProperties;
 } {
-  const metodo = card.metodo_invocacion;
-  const atributoInfo = ATRIBUTO_INFO[card.atributo];
+  // Artefactos: frame gris/zinc especial, sin animación de atributo
+  if (card.es_artefacto) {
+    return {
+      border: "border-zinc-500",
+      gradient: "from-zinc-600 to-zinc-800",
+      badge: "bg-zinc-700/80 text-zinc-300 border border-zinc-500/50",
+      extraClass: "",
+      style: {},
+    };
+  }
+
+  const metodo = card.metodo_invocacion ?? "NORMAL";
+  const atributoInfo = ATRIBUTO_INFO[card.atributo ?? "CELESTIAL"];
   const metodoInfo = METODO_INFO[metodo];
-  const atributoCss = ATRIBUTO_CSS[card.atributo] || ATRIBUTO_CSS.CELESTIAL;
+  const atributoCss = ATRIBUTO_CSS[card.atributo ?? "CELESTIAL"] || ATRIBUTO_CSS.CELESTIAL;
   const cssVars: React.CSSProperties = {
     "--atributo-color": atributoCss.color,
     "--atributo-glow": atributoCss.glow,
@@ -99,12 +110,40 @@ function getCardFrameClasses(card: CardData): {
   }
 }
 
-/** Build type line string: "Atributo/Raza/Metodo" e.g. "Umbral/Clasto/Normal" */
+/** Build type line string. Monsters: "Atributo/Raza/Metodo". Artefacts: "Artefacto: Campo/Equipo" */
 function getTypeLine(card: CardData): string {
-  const atributoLabel = ATRIBUTO_INFO[card.atributo].label;
-  const razaLabel = RAZA_INFO[card.raza_tipo].label;
-  const metodoLabel = METODO_INFO[card.metodo_invocacion].label;
+  if (card.es_artefacto) {
+    const tipoLabel = card.artefacto_tipo === "campo" ? "Campo" : card.artefacto_tipo === "equipo" ? "Equipo" : "Artefacto";
+    return `Artefacto: ${tipoLabel}`;
+  }
+  const atributoLabel = card.atributo ? ATRIBUTO_INFO[card.atributo].label : "???";
+  const razaLabel = card.raza_tipo ? RAZA_INFO[card.raza_tipo].label : "???";
+  const metodoLabel = card.metodo_invocacion ? METODO_INFO[card.metodo_invocacion].label : "???";
   return `${atributoLabel}/${razaLabel}/${metodoLabel}`;
+}
+
+/** Get altar category label with emoji for display */
+function getAltarCategoriaLabel(categoria: string | undefined): string | null {
+  if (!categoria) return null;
+  switch (categoria) {
+    case "PASIVO": return "🟢 Pasivo";
+    case "ACTIVABLE": return "🔵 Activable";
+    case "TURNO": return "🟡 1/Turno";
+    case "RESPUESTA": return "🔴 Respuesta";
+    default: return null;
+  }
+}
+
+/** Get short altar category text for small card overlays */
+function getAltarCategoriaShort(categoria: string | undefined): string | null {
+  if (!categoria) return null;
+  switch (categoria) {
+    case "PASIVO": return "PAS";
+    case "ACTIVABLE": return "ACT";
+    case "TURNO": return "1/T";
+    case "RESPUESTA": return "RSP";
+    default: return null;
+  }
 }
 
 // ============ TARGETING ============
@@ -198,6 +237,7 @@ function CardView({
   showInfo = false,
   overrideAtk,
   immuneEffectDestroy,
+  isOnAltar,
 }: {
   card: CardData;
   selected?: boolean;
@@ -206,13 +246,19 @@ function CardView({
   showInfo?: boolean;
   overrideAtk?: number;
   immuneEffectDestroy?: boolean;
+  isOnAltar?: boolean;
 }) {
   const frame = getCardFrameClasses(card);
+  const isArtefacto = card.es_artefacto;
   const isGenesis = card.metodo_invocacion === "GENESIS";
   const artSrc = getArtSrc(card);
   const hasEffects = card.efecto_monstruo.length > 0 || card.efecto_altar.length > 0;
   const typeLine = getTypeLine(card);
-  const metodoInfo = METODO_INFO[card.metodo_invocacion];
+  const metodoInfo = card.metodo_invocacion ? METODO_INFO[card.metodo_invocacion] : null;
+
+  // Altar category for cards on altar
+  const altarCategoria = isOnAltar && card.efecto_altar.length > 0 ? card.efecto_altar[0]?.categoria : undefined;
+  const altarCatShort = getAltarCategoriaShort(altarCategoria);
 
   if (size === "tiny") {
     return (
@@ -232,12 +278,27 @@ function CardView({
         )}
         <div className="absolute inset-x-0 top-0 h-4 bg-gradient-to-b from-black/70 to-transparent" />
         <div className="absolute inset-x-0 bottom-0 h-3 bg-gradient-to-t from-black/70 to-transparent" />
-        <div className="absolute bottom-0 right-0 text-[0.35rem] font-bold text-amber-400 bg-black/60 px-0.5 rounded-tl">⚔{card.atk}</div>
+        {!isArtefacto && (
+          <div className="absolute bottom-0 right-0 text-[0.35rem] font-bold text-amber-400 bg-black/60 px-0.5 rounded-tl">⚔{card.atk}</div>
+        )}
+        {isArtefacto && (
+          <div className="absolute bottom-0 right-0 text-[0.35rem] font-bold text-zinc-300 bg-black/60 px-0.5 rounded-tl">
+            {card.artefacto_tipo === "campo" ? "🌍" : "⚔"}
+          </div>
+        )}
         {hasEffects && (
           <div className="absolute bottom-0 left-0 text-[0.35rem] text-amber-300 bg-black/60 px-0.5 rounded-tr">✦</div>
         )}
         {immuneEffectDestroy && (
           <div className="absolute top-0 left-0 text-[0.35rem] bg-emerald-600/90 text-white px-0.5 rounded-br font-bold z-10">🛡</div>
+        )}
+        {altarCatShort && (
+          <div className={`absolute top-0 left-0 text-[0.35rem] font-bold px-0.5 rounded-br z-10 ${
+            altarCategoria === "PASIVO" ? "bg-emerald-600/90 text-white" :
+            altarCategoria === "ACTIVABLE" ? "bg-blue-600/90 text-white" :
+            altarCategoria === "TURNO" ? "bg-amber-600/90 text-white" :
+            "bg-red-600/90 text-white"
+          }`}>{altarCatShort}</div>
         )}
       </div>
     );
@@ -270,9 +331,11 @@ function CardView({
           {/* Bottom gradient for info readability */}
           <div className="absolute inset-x-0 bottom-0 h-12 bg-gradient-to-t from-black/80 via-black/40 to-transparent" />
           {/* Method badge */}
-          <div className={`absolute top-0.5 left-0.5 text-[0.35rem] font-bold px-0.5 rounded-sm ${metodoInfo.badge} backdrop-blur-sm`}>
-            {metodoInfo.label}
-          </div>
+          {metodoInfo && (
+            <div className={`absolute top-0.5 left-0.5 text-[0.35rem] font-bold px-0.5 rounded-sm ${metodoInfo.badge} backdrop-blur-sm`}>
+              {metodoInfo.label}
+            </div>
+          )}
           {/* Name overlay */}
           <div className={`absolute inset-x-0 top-0.5 text-center font-bold truncate px-5 ${size === "small" ? "text-[0.35rem]" : "text-[0.45rem]"} text-purple-100 drop-shadow-[0_1px_3px_rgba(0,0,0,0.9)]`}>
             {card.name}
@@ -319,9 +382,9 @@ function CardView({
         {/* Gradient overlays for readability */}
         <div className="absolute inset-x-0 top-0 h-8 bg-gradient-to-b from-black/60 to-transparent" />
         {size === "small" && <div className="absolute inset-x-0 bottom-0 h-5 bg-gradient-to-t from-black/70 to-transparent" />}
-        {/* Atributo badge */}
+        {/* Atributo badge — Artefactos muestran su tipo */}
         <div className="absolute top-0.5 left-0.5 text-[0.35rem] font-bold px-0.5 rounded-sm bg-black/50 text-white/80 backdrop-blur-sm">
-          {ATRIBUTO_INFO[card.atributo].label}
+          {isArtefacto ? (card.artefacto_tipo === "campo" ? "🌍 Campo" : "⚔ Equipo") : (card.atributo ? ATRIBUTO_INFO[card.atributo].label : "???")}
         </div>
         {/* Name overlay */}
         <div className={`absolute inset-x-0 top-0.5 text-center font-bold truncate px-5 ${size === "small" ? "text-[0.35rem]" : "text-[0.45rem]"} text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)]`}>
@@ -333,10 +396,27 @@ function CardView({
             ✦
           </div>
         )}
-        {/* ATK overlay for board cards (small) */}
-        {size === "small" && (
+        {/* Altar category badge on altar cards */}
+        {altarCatShort && (
+          <div className={`absolute top-0.5 right-0.5 text-[0.35rem] font-bold px-0.5 rounded-sm backdrop-blur-sm z-10 ${
+            altarCategoria === "PASIVO" ? "bg-emerald-600/90 text-white" :
+            altarCategoria === "ACTIVABLE" ? "bg-blue-600/90 text-white" :
+            altarCategoria === "TURNO" ? "bg-amber-600/90 text-white" :
+            "bg-red-600/90 text-white"
+          }`}>
+            {altarCatShort}
+          </div>
+        )}
+        {/* ATK overlay for board cards (small) — NO se muestra en artefactos */}
+        {size === "small" && !isArtefacto && (
           <div className="absolute bottom-0.5 right-0.5 font-bold text-amber-400 text-[0.5rem] bg-black/50 px-1 rounded-sm backdrop-blur-sm drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)]">
             ⚔{overrideAtk ?? card.atk}
+          </div>
+        )}
+        {/* Artefacto icon for small board cards */}
+        {size === "small" && isArtefacto && (
+          <div className="absolute bottom-0.5 right-0.5 font-bold text-zinc-300 text-[0.5rem] bg-black/50 px-1 rounded-sm backdrop-blur-sm">
+            {card.artefacto_tipo === "campo" ? "🌍" : "⚔"}
           </div>
         )}
         {/* Info button */}
@@ -352,9 +432,16 @@ function CardView({
           <div className="text-[0.28rem] font-bold text-zinc-300 truncate">
             {typeLine}
           </div>
-          <div className="font-bold text-amber-400 text-[0.45rem] leading-tight">
-            ⚔ {overrideAtk ?? card.atk}
-          </div>
+          {!isArtefacto && (
+            <div className="font-bold text-amber-400 text-[0.45rem] leading-tight">
+              ⚔ {overrideAtk ?? card.atk}
+            </div>
+          )}
+          {isArtefacto && (
+            <div className="font-bold text-zinc-400 text-[0.35rem] leading-tight">
+              {card.artefacto_tipo === "campo" ? "🌍 Efecto Global" : "⚔ Equipo"}
+            </div>
+          )}
           <div className="text-[0.25rem] text-zinc-500 italic truncate flex-1">
             {card.efecto_monstruo[0]?.desc || card.efecto_altar[0]?.desc || ""}
           </div>
@@ -371,12 +458,13 @@ function CardView({
 function CardDetailSheet({ card, onClose, isOnAltar, canActivateAltar, onActivateAltar }: { card: CardData; onClose: () => void; isOnAltar?: boolean; canActivateAltar?: boolean; onActivateAltar?: () => void }) {
   const frame = getCardFrameClasses(card);
   const artSrc = getArtSrc(card);
+  const isArtefacto = card.es_artefacto;
   const isGenesis = card.metodo_invocacion === "GENESIS";
   const typeLine = getTypeLine(card);
 
   // Get altar category info
   const altarCategoria = isOnAltar && card.efecto_altar.length > 0 ? card.efecto_altar[0]?.categoria : undefined;
-  const categoriaLabel = altarCategoria === "PASIVO" ? "🟢 Pasivo" : altarCategoria === "ACTIVABLE" ? "🔵 Activable" : altarCategoria === "TURNO" ? "🟡 1/Turno" : altarCategoria === "RESPUESTA" ? "🔴 Respuesta" : null;
+  const categoriaLabel = getAltarCategoriaLabel(altarCategoria);
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center safe-bottom" onClick={onClose}>
@@ -396,20 +484,40 @@ function CardDetailSheet({ card, onClose, isOnAltar, canActivateAltar, onActivat
           )}
         </div>
 
-        {/* Top overlay - name + type line + ATK */}
+        {/* Top overlay - name + type line + ATK (monsters only) */}
         <div className={`absolute inset-x-0 top-0 ${isGenesis ? 'h-24' : 'h-20'} bg-gradient-to-b from-black/85 via-black/50 to-transparent flex flex-col justify-end pb-2 px-4 rounded-t-xl`}>
           <h3 className={`font-bold text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.95)] leading-tight ${isGenesis ? 'text-xl text-purple-100' : 'text-lg'}`}>{card.name}</h3>
-          <div className="flex items-center gap-2 mt-1">
+          <div className="flex items-center gap-2 mt-1 flex-wrap">
             <span className="text-sm text-zinc-100 font-bold drop-shadow-[0_1px_3px_rgba(0,0,0,0.9)] bg-black/40 px-1.5 py-0.5 rounded">{typeLine}</span>
-            <span className="text-sm font-bold text-amber-400 drop-shadow-[0_1px_3px_rgba(0,0,0,0.9)] bg-black/40 px-1.5 py-0.5 rounded">⚔ {card.atk}</span>
+            {!isArtefacto && (
+              <span className="text-sm font-bold text-amber-400 drop-shadow-[0_1px_3px_rgba(0,0,0,0.9)] bg-black/40 px-1.5 py-0.5 rounded">⚔ {card.atk}</span>
+            )}
+            {isArtefacto && card.artefacto_tipo && (
+              <span className="text-sm font-bold text-zinc-300 drop-shadow-[0_1px_3px_rgba(0,0,0,0.9)] bg-black/40 px-1.5 py-0.5 rounded">
+                {card.artefacto_tipo === "campo" ? "🌍 Campo" : "⚔ Equipo"}
+              </span>
+            )}
           </div>
         </div>
 
-        {/* Bottom overlay - effects split into Monstruo / Altar */}
+        {/* Bottom overlay - effects */}
         <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/90 via-black/70 to-transparent rounded-b-xl">
           <div className="px-4 pb-5 pt-8">
-            {/* Efecto Monstruo */}
-            {card.efecto_monstruo.length > 0 && (
+            {/* ARTEFACTO: solo un efecto */}
+            {isArtefacto && card.efecto_monstruo.length > 0 && (
+              <div>
+                <div className="text-[0.6rem] font-bold text-zinc-300 mb-0.5 drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)]">
+                  {card.artefacto_tipo === "campo" ? "🌍 Efecto de Campo" : "⚔ Efecto de Equipo"}
+                </div>
+                {card.efecto_monstruo.map((eff, i) => (
+                  <div key={`m-${i}`} className="text-[0.65rem] text-zinc-200 leading-relaxed drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)]">
+                    {eff.desc}
+                  </div>
+                ))}
+              </div>
+            )}
+            {/* MONSTRUO: Efecto Monstruo */}
+            {!isArtefacto && card.efecto_monstruo.length > 0 && (
               <div className="mb-2">
                 <div className="text-[0.6rem] font-bold text-amber-400 mb-0.5 drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)]">
                   ⚔ Efecto Monstruo
@@ -421,11 +529,11 @@ function CardDetailSheet({ card, onClose, isOnAltar, canActivateAltar, onActivat
                 ))}
               </div>
             )}
-            {/* Efecto Altar */}
-            {card.efecto_altar.length > 0 && (
+            {/* MONSTRUO: Efecto Altar con categoría */}
+            {!isArtefacto && card.efecto_altar.length > 0 && (
               <div>
                 <div className="text-[0.6rem] font-bold text-cyan-400 mb-0.5 drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)]">
-                  ♨ Efecto Altar{categoriaLabel ? ` — ${categoriaLabel}` : ""}
+                  ♨ Altar: {categoriaLabel || "Efecto"}
                 </div>
                 {card.efecto_altar.map((eff, i) => (
                   <div key={`a-${i}`} className="text-[0.65rem] text-zinc-200 leading-relaxed drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)]">
@@ -566,7 +674,7 @@ function BoardSlot({
             if (onDetail && !targetInfo.valid) { e.stopPropagation(); onDetail(); }
           }}
         >
-          <CardView card={card} size="small" overrideAtk={computedAtk} immuneEffectDestroy={noEffectDestroy} />
+          <CardView card={card} size="small" overrideAtk={computedAtk} immuneEffectDestroy={noEffectDestroy} isOnAltar={slotId.includes("altar")} />
           {/* Tap hint on mobile — always slightly visible on touch */}
           {!targetInfo.valid && (
             <div className="absolute inset-0 rounded-md opacity-[0.04] active:opacity-20 transition-opacity bg-white pointer-events-none" />
@@ -672,7 +780,7 @@ function saveDeckToStorage(deck: CardData[]) {
   localStorage.setItem("genesis-custom-deck", JSON.stringify(deck.map((c) => c.name)));
 }
 
-const ALL_TYPE_KEYS: ("ALL" | CardType)[] = ["ALL", "CELESTIAL", "UMBRAL", "FULGUR", "AURA", "ABIS", "FOSO", "ECLIPSE", "CORRUPCION", "ANOMALIA", "GENESIS"];
+const ALL_TYPE_KEYS: ("ALL" | CardType)[] = ["ALL", "CELESTIAL", "UMBRAL", "FULGUR", "AURA", "ABIS", "FOSO", "ECLIPSE", "CORRUPCION", "ANOMALIA", "GENESIS", "ARTEFACTO"];
 
 function DeckEditor({ onDone }: { onDone: (deck: CardData[]) => void }) {
   const [deck, setDeck] = useState<CardData[]>(loadDeckFromStorage);

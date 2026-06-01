@@ -553,51 +553,46 @@ const UMBRAL_CARDS: CartaMaestra[] = [
 const ARTEFACTO_CARDS: CartaMaestra[] = [
 
   // ─── ARTEFACTO CAMPO (Magia de Campo: efecto global permanente) ───
+  // Los artefactos NO tienen atributo, raza, ni metodo_invocacion.
+  // Tienen atk: 0 (no se muestra) y solo efecto_monstruo (su unico efecto).
+  // No tienen efecto_altar.
 
   {
     id: "ART-017",
     nombre: "Cruzada Celestial",
-    raza_tipo: "GENS" as const,
-    atributo: "CELESTIAL",
-    metodo_invocacion: "NORMAL",
     atk: 0,
     es_altar: false,
     es_artefacto: true,
     artefacto_tipo: "campo",
     contador_escudo: 0,
-    efecto_monstruo: [],
-    efecto_altar: [{
+    efecto_monstruo: [{
       trigger: "passive",
       type: "buff_atk",
       amount: 1,
       scope: "all_allies",
       condition: "none",
       desc: "Los monstruos CELESTIAL ganan +1 ATK. Los monstruos UMBRAL pierden -1 ATK.",
-      categoria: "PASIVO",
     }],
+    efecto_altar: [],
   },
 
   {
     id: "ART-018",
     nombre: "Tierra Baldía",
-    raza_tipo: "SECAT" as const,
-    atributo: "UMBRAL",
-    metodo_invocacion: "NORMAL",
     atk: 0,
     es_altar: false,
     es_artefacto: true,
     artefacto_tipo: "campo",
     contador_escudo: 0,
-    efecto_monstruo: [],
-    efecto_altar: [{
+    efecto_monstruo: [{
       trigger: "passive",
       type: "debuff_atk",
       amount: 1,
       scope: "all_enemies",
       condition: "none",
       desc: "Todos los monstruos pierden 1 ATK. Los contadores de escudo no se pueden activar.",
-      categoria: "PASIVO",
     }],
+    efecto_altar: [],
   },
 
   // ─── ARTEFACTO EQUIPO (Carta de Equipo: se vincula a un monstruo) ───
@@ -605,9 +600,6 @@ const ARTEFACTO_CARDS: CartaMaestra[] = [
   {
     id: "ART-019",
     nombre: "Espada del Alba",
-    raza_tipo: "GENS" as const,
-    atributo: "CELESTIAL",
-    metodo_invocacion: "NORMAL",
     atk: 0,
     es_altar: false,
     es_artefacto: true,
@@ -627,9 +619,6 @@ const ARTEFACTO_CARDS: CartaMaestra[] = [
   {
     id: "ART-020",
     nombre: "Escudo Umbral",
-    raza_tipo: "NECRO" as const,
-    atributo: "UMBRAL",
-    metodo_invocacion: "NORMAL",
     atk: 0,
     es_altar: false,
     es_artefacto: true,

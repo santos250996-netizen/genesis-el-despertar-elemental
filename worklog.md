@@ -119,3 +119,30 @@ Stage Summary:
 - Cada prompt siguió las plantillas de ART_DESIGN_PATTERNS.md (dark fantasy watercolor, paleta por atributo, modificadores por método)
 - ART_MAP ya estaba configurado correctamente — no requirió cambios
 - Dev server corriendo en localhost:3000, imágenes servidas correctamente
+
+---
+Task ID: 3
+Agent: Main Agent
+Task: Update card descriptions: show altar category (PASIVO/ACTIVABLE/TURNO/RESPUESTA), artefact cards have no attribute/ATK/altar effect
+
+Work Log:
+- Updated CartaMaestra type in types.ts: `atributo`, `raza_tipo`, `metodo_invocacion` now optional (not required for artefacts)
+- Updated CardData interface: added `es_artefacto: boolean`, `artefacto_tipo?: ArtefactoTipo`, made `atributo`, `raza_tipo`, `metodo_invocacion` optional
+- Updated `metodoToCardType()` to accept CartaMaestra directly and return "ARTEFACTO" for artefact cards
+- Updated `cartaToCardData()` to include `es_artefacto` and `artefacto_tipo` fields
+- Updated artefact cards (ART-017 to ART-020): removed `atributo`, `raza_tipo`, `metodo_invocacion`, moved effects from `efecto_altar` to `efecto_monstruo`, `efecto_altar` is now always empty for artefacts
+- Updated page.tsx `getTypeLine()`: artefacts show "Artefacto: Campo" or "Artefacto: Equipo"
+- Added `getAltarCategoriaLabel()` and `getAltarCategoriaShort()` helpers for consistent altar category display
+- Updated `getCardFrameClasses()`: artefacts get special zinc/grey frame without attribute animations
+- Updated `CardView`: artefacts don't show ATK, show artefact type badge (🌍 Campo / ⚔ Equipo), show altar category badge on altar cards
+- Updated `CardDetailSheet`: artefacts show single effect ("Efecto de Campo" / "Efecto de Equipo"), no ATK, no altar effect section; monsters show "♨ Altar: 🟢 Pasivo" style labels
+- Added `isOnAltar` prop to CardView for altar category badge display on board cards
+- Added "ARTEFACTO" to deck editor filter list
+- Build verified: TypeScript compiles clean, Next.js build succeeds
+
+Stage Summary:
+- Altar categories now shown on card detail as "♨ Altar: 🟢 Pasivo / 🔵 Activable / 🟡 1/Turno / 🔴 Respuesta"
+- Altar category badges (PAS/ACT/1/T/RSP) shown on small board cards when placed on altar slots
+- Artefact cards properly display as "Artefacto: Campo" or "Artefacto: Equipo" with no ATK, no attribute, no altar effect
+- Artefact effects correctly labeled as "🌍 Efecto de Campo" or "⚔ Efecto de Equipo"
+- All changes backward compatible — existing engine code continues to work

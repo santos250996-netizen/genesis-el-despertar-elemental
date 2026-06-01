@@ -145,21 +145,23 @@ export interface CartaMaestra {
   id: string;
   /** Nombre de la carta */
   nombre: string;
-  /** Raza / tipo de criatura */
-  raza_tipo: RazaTipo;
-  /** Atributo de energía */
-  atributo: Atributo;
-  /** Método de invocación */
-  metodo_invocacion: MetodoInvocacion;
-  /** Única estadística de combate — NO existe DEF */
+  /** Raza / tipo de criatura (NO aplica a artefactos) */
+  raza_tipo?: RazaTipo;
+  /** Atributo de energía (NO aplica a artefactos) */
+  atributo?: Atributo;
+  /** Método de invocación (NO aplica a artefactos) */
+  metodo_invocacion?: MetodoInvocacion;
+  /** Única estadística de combate — NO existe DEF. Artefactos tienen atk: 0 (no se muestra) */
   atk: number;
   /** Si la carta está en modo altar (Columna 1 o 3, pasiva) */
   es_altar: boolean;
   /** Escudo: bloquea 1 ataque completo, luego se gasta (máx 1 por carta) */
   contador_escudo: number;
-  /** Efecto que se activa cuando la carta lucha en el campo (es_altar = false) */
+  /** Efecto que se activa cuando la carta lucha en el campo (es_altar = false).
+   *  Para artefactos, este es su ÚNICO efecto (campo=global pasivo, equipo=bono al equipado). */
   efecto_monstruo: EfectoDescriptor[];
-  /** Efecto que se activa cuando la carta está en modo altar (es_altar = true) */
+  /** Efecto que se activa cuando la carta está en modo altar (es_altar = true).
+   *  Artefactos NO tienen efecto_altar (siempre vacío). */
   efecto_altar: EfectoDescriptor[];
   /** Si es true, esta carta es un Artefacto (no un monstruo) */
   es_artefacto?: boolean;
@@ -370,10 +372,12 @@ export interface CardData {
   equippedTo?: SlotId;
   // ── Campos nuevos de CartaMaestra ──
   _cartaMaestra: CartaMaestra;
-  raza_tipo: RazaTipo;
-  atributo: Atributo;
-  metodo_invocacion: MetodoInvocacion;
+  raza_tipo?: RazaTipo;
+  atributo?: Atributo;
+  metodo_invocacion?: MetodoInvocacion;
   es_altar: boolean;
+  es_artefacto: boolean;
+  artefacto_tipo?: ArtefactoTipo;
   contador_escudo: number;
   efecto_monstruo: EfectoDescriptor[];
   efecto_altar: EfectoDescriptor[];
@@ -390,11 +394,15 @@ function idToNumber(id: string): number {
 }
 
 /** Mapea MetodoInvocacion + Atributo al CardType legacy.
+ *  ARTEFACTO → siempre "ARTEFACTO".
  *  NORMAL → usa el atributo (CELESTIAL/UMBRAL) como tipo visual.
  *  Los métodos especiales (ANOMALIA, CORRUPCION, ECLIPSE, GENESIS)
  *  usan su método como tipo para estilizado propio.
  */
-function metodoToCardType(m: MetodoInvocacion, atributo: Atributo): CardType {
+function metodoToCardType(carta: CartaMaestra): CardType {
+  if (carta.es_artefacto) return "ARTEFACTO";
+  const m = carta.metodo_invocacion ?? "NORMAL";
+  const atributo = carta.atributo ?? "CELESTIAL";
   if (m === "NORMAL") return atributo as CardType;
   return m as CardType;
 }
@@ -402,10 +410,11 @@ function metodoToCardType(m: MetodoInvocacion, atributo: Atributo): CardType {
 /** Genera flags legacy a partir de CartaMaestra */
 function generarFlags(carta: CartaMaestra): string[] {
   const flags: string[] = [];
-  if (carta.metodo_invocacion === "GENESIS") flags.push("isGenesis");
-  if (carta.metodo_invocacion === "ECLIPSE") flags.push("isEclipse");
-  if (carta.metodo_invocacion === "CORRUPCION") flags.push("isCorruption");
-  if (carta.metodo_invocacion === "ANOMALIA") flags.push("isAnomaly");
+  const m = carta.metodo_invocacion;
+  if (m === "GENESIS") flags.push("isGenesis");
+  if (m === "ECLIPSE") flags.push("isEclipse");
+  if (m === "CORRUPCION") flags.push("isCorruption");
+  if (m === "ANOMALIA") flags.push("isAnomaly");
   if (carta.es_altar) flags.push("isAltar");
   if (carta.es_artefacto) {
     flags.push("isArtifact");
@@ -430,7 +439,7 @@ export function cartaToCardData(carta: CartaMaestra): CardData {
   return {
     id: idToNumber(carta.id),
     name: carta.nombre,
-    type: metodoToCardType(carta.metodo_invocacion, carta.atributo),
+    type: metodoToCardType(carta),
     atk: carta.atk,
     effects: efectosToLegacy([...carta.efecto_monstruo, ...carta.efecto_altar]),
     flags: generarFlags(carta),
@@ -440,6 +449,8 @@ export function cartaToCardData(carta: CartaMaestra): CardData {
     atributo: carta.atributo,
     metodo_invocacion: carta.metodo_invocacion,
     es_altar: carta.es_altar,
+    es_artefacto: !!carta.es_artefacto,
+    artefacto_tipo: carta.artefacto_tipo,
     contador_escudo: carta.contador_escudo,
     efecto_monstruo: carta.efecto_monstruo,
     efecto_altar: carta.efecto_altar,
