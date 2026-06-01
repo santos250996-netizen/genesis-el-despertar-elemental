@@ -22,4 +22,10 @@ export const ART_MAP: Record<string, string> = {
   "UMB-014": "/cards/eclipse_permanente.png",
   "UMB-015": "/cards/desierto_viviente.png",
   "UMB-016": "/cards/oblivion_fin_todo.png",
+
+  // ─── ARTEFACTOS ───
+  "ART-017": "/cards/cruzada_celestial.png",
+  "ART-018": "/cards/tierra_baldia.png",
+  "ART-019": "/cards/espada_alba.png",
+  "ART-020": "/cards/escudo_umbral.png",
 };
