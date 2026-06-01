@@ -123,6 +123,12 @@ function getTargetInfo(slotId: SlotId, card: CardData | null, board: Record<Slot
   }
 
   if (card.type === "ANOMALIA") {
+    // Anomalía en altar: se permite como híbrida (efecto altar)
+    if (slotId.includes("altar")) {
+      if (board[slotId as SlotId]) return { valid: false, type: "place" };
+      return { valid: true, type: "place" };
+    }
+    // Anomalía en monstruo enemigo: efecto consume
     if (!slotId.startsWith("e-mon-")) return { valid: false, type: "consume" };
     const col = slotId.split("-")[2];
     if (col === "2") return { valid: false, type: "consume" };
@@ -944,7 +950,7 @@ function GameScreen({ state, onSelectCard, onPlaceCard, onAttackAll, onEndTurn, 
       return "Toca una carta, luego colócala en zona de monstruo o altar.";
     }
     const c = selectedCard;
-    if (c.type === "ANOMALIA") return "🌀 Toca un monstruo enemigo para consumir";
+    if (c.type === "ANOMALIA") return "🌀 Toca un monstruo enemigo para consumir, o un Altar para efecto altar";
     if (c.type === "CORRUPCION") return !b["p-altar-sombra"] || !b["p-mon-3"] ? "Necesitas Altar Sombra + monstruo en Z3" : "☣ Toca Zona 3 para sacrificar";
     if (c.type === "ECLIPSE") return !b["p-altar-luz"] || !b["p-altar-sombra"] ? "Necesitas ambos Altares" : "Toca la Zona Central";
     if (c.flags.includes("isGenesis")) return !b["p-altar-luz"] || !b["p-altar-sombra"] ? "Necesitas ambos Altares" : "Toca M2 — consume ambos Altares";

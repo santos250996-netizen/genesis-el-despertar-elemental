@@ -379,8 +379,8 @@ export class DuelEngine implements DuelEngineInterface {
     let newEnemyHand = [...this.state.enemyHand];
     let newEffects = { ...this.state.effects };
 
-    // ── ANOMALÍA: consume enemy monster ──
-    if (card.type === "ANOMALIA") {
+    // ── ANOMALÍA: consume enemy monster (solo en slots e-mon-*) ──
+    if (card.type === "ANOMALIA" && slotId.startsWith("e-mon-")) {
       const col = getColumn(slotId);
       const eAltar = getEnemyAltarForColumn(col);
       const eMon = newBoard[slotId];
@@ -402,6 +402,7 @@ export class DuelEngine implements DuelEngineInterface {
       this.commit();
       return;
     }
+    // ── ANOMALÍA en altar: se coloca normalmente como híbrida (efecto altar) ──
 
     // ── CORRUPCIÓN: sacrifice monster in zone 3 (only when placed in p-mon-3) ──
     if (card.type === "CORRUPCION" && slotId === "p-mon-3") {

@@ -31,9 +31,9 @@ export function getValidSlots(card: CardData): SlotId[] {
     return ["p-mon-3", "p-altar-luz", "p-altar-sombra"];
   }
 
-  // ANOMALIA — handled specially (targets enemy monster), not placed directly
+  // ANOMALIA — puede ir en altares (como híbrida) o consumir monstruo enemigo
   if (card.type === "ANOMALIA") {
-    return [];
+    return ["p-altar-luz", "p-altar-sombra"];
   }
 
   // Todas las cartas son híbridas (monstruo + altar) — pueden ir en zonas de monstruo o altares
@@ -77,9 +77,13 @@ export function validatePlacement(
     return null;
   }
 
-  // ANOMALIA targets an enemy monster slot
+  // ANOMALIA — en altar se permite (como híbrida), en e-mon consume monstruo enemigo
   if (card.type === "ANOMALIA") {
-    if (!slotId.startsWith("e-mon-")) return "Anomalía debe seleccionar un monstruo enemigo sintonizado.";
+    if (slotId.includes("altar")) {
+      // En altar: se permite sin requisitos (efecto altar)
+      return null;
+    }
+    if (!slotId.startsWith("e-mon-")) return "Anomalía debe seleccionar un monstruo enemigo sintonizado o un Altar.";
     const col = parseInt(slotId.split("-")[2]);
     if (col === 2) return "La zona central no puede estar sintonizada.";
     const eAltar = col === 1 ? "e-altar-luz" : "e-altar-sombra";
