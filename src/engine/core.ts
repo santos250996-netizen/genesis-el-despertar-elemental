@@ -62,6 +62,8 @@ function emptyEffectState(): EffectState {
     discardBonusAtk: 0,
     atkBonus: {},
     compensationDrawPending: null,
+    shieldCounters: {},
+    negatedEffects: 0,
   };
 }
 
@@ -266,6 +268,20 @@ export class DuelEngine implements DuelEngineInterface {
 
   setNoEffectDestroy(value: boolean): void {
     this.state.effects.noEffectDestroy = value;
+  }
+
+  addShield(slotId: SlotId): void {
+    const cur = this.state.effects.shieldCounters[slotId] ?? 0;
+    // Max 1 shield per card (Opción 4B)
+    if (cur >= 1) return;
+    this.state.effects.shieldCounters = { ...this.state.effects.shieldCounters, [slotId]: 1 };
+  }
+
+  consumeShield(slotId: SlotId): boolean {
+    const cur = this.state.effects.shieldCounters[slotId] ?? 0;
+    if (cur <= 0) return false;
+    this.state.effects.shieldCounters = { ...this.state.effects.shieldCounters, [slotId]: 0 };
+    return true;
   }
 
   getPlayerAtk(slotId: SlotId): number {

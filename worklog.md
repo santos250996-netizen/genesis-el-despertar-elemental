@@ -50,3 +50,24 @@ Stage Summary:
 - 16 cards designed with dual effects (monster + altar)
 - Backward compatible with existing engine via CardData adapter
 - Ready for: engine rewrite to use new declarative effect system, UI update for new card types
+---
+Task ID: fix-runtime-error
+Agent: Main
+Task: Fix runtime TypeError "can't access property border, info is undefined" in DeckEditor
+
+Work Log:
+- Identified root cause: `CARD_TYPE_INFO[card.type]` returns undefined because `metodoToCardType("NORMAL")` returns "NORMAL" which has no entry in CARD_TYPE_INFO
+- Fixed `metodoToCardType()` in types.ts to accept both MetodoInvocacion + Atributo params; NORMAL cards now use their atributo (CELESTIAL/UMBRAL) as the visual type
+- Fixed `emptyEffectState()` in core.ts missing `shieldCounters` and `negatedEffects` fields
+- Fixed `use-duel-engine.ts` inline EffectState missing same fields
+- Fixed ART_MAP lookup: card.id is number but ART_MAP uses string keys ("CEL-001", etc.). Added `getArtSrc()` helper using `card._cartaMaestra.id`
+- Added `addShield()` and `consumeShield()` methods to DuelEngine class
+- Added `artifactType` optional field and `id` optional field to CardData.effects for legacy compat
+- Fixed resolver.ts import to use DuelEngine from types.ts instead of core.ts
+- Verified: TypeScript compiles clean (0 source errors), all 16 cards have valid CARD_TYPE_INFO and ART_MAP mappings, app renders HTTP 200
+
+Stage Summary:
+- Runtime error fixed — DeckEditor no longer crashes on `info.border`
+- All 16 cards (10 NORMAL + 3 ANOMALÍA + 1 CORRUPCIÓN + 1 ECLIPSE + 1 GÉNESIS) properly display with CELESTIAL/UMBRAL visual styling
+- Shield system (addShield/consumeShield) fully implemented in DuelEngine
+- CardData interface extended for backward compat with old ARTEFACTO code paths

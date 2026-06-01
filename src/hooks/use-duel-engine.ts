@@ -67,6 +67,8 @@ export function useDuelEngine(): UseDuelEngineReturn {
         discardBonusAtk: 0,
         atkBonus: {},
         compensationDrawPending: null,
+        shieldCounters: {},
+        negatedEffects: 0,
       },
       turnNumber: 0,
       attackMode: false,

@@ -2,8 +2,7 @@
 // EDOPRO-style resolver that loads and executes card scripts from the registry.
 
 import { CARD_SCRIPTS } from "@/scripts/cards/index";
-import type { CardScript, CardInstance, DuelContext, SlotId } from "@/engine/types";
-import type { DuelEngine } from "@/engine/core";
+import type { CardScript, CardInstance, DuelContext, SlotId, DuelEngine } from "@/engine/types";
 
 /**
  * Get a card script by numeric ID.

@@ -14,6 +14,12 @@ function buildDefaultDeck(): CardData[] {
   return DECKS.player.map(id => CARDS[id]).filter(Boolean) as CardData[];
 }
 
+/** Resolve art source for a CardData — uses CartaMaestra string ID for ART_MAP lookup */
+function getArtSrc(card: CardData): string | null {
+  const key = card._cartaMaestra?.id ?? card.id;
+  return ART_MAP[key] || null;
+}
+
 // ============ TARGETING ============
 
 type TargetInfo = { valid: boolean; type: "place" | "sacrifice" | "consume" | "artifact" };
@@ -84,7 +90,7 @@ function CardView({
 }) {
   const info = CARD_TYPE_INFO[card.type];
   const isGenesis = card.type === "GENESIS";
-  const artSrc = ART_MAP[card.id] || null;
+  const artSrc = getArtSrc(card);
   const hasEffects = card.effects.length > 0;
 
   if (size === "tiny") {
@@ -240,7 +246,7 @@ function CardView({
 
 function CardDetailSheet({ card, onClose }: { card: CardData; onClose: () => void }) {
   const info = CARD_TYPE_INFO[card.type];
-  const artSrc = ART_MAP[card.id] || null;
+  const artSrc = getArtSrc(card);
   const isGenesis = card.type === "GENESIS";
 
   return (
@@ -588,7 +594,7 @@ function DeckEditor({ onDone }: { onDone: (deck: CardData[]) => void }) {
           {filtered.map((card, i) => {
             const copies = copyCount(card.name);
             const info = CARD_TYPE_INFO[card.type];
-            const artSrc = ART_MAP[card.id];
+            const artSrc = getArtSrc(card);
             const full = copies >= MAX_COPIES;
             const deckFull = !canAdd;
             return (
@@ -658,7 +664,7 @@ function DeckEditor({ onDone }: { onDone: (deck: CardData[]) => void }) {
           ) : (
             deck.map((card, idx) => {
               const info = CARD_TYPE_INFO[card.type];
-              const artSrc = ART_MAP[card.id];
+              const artSrc = getArtSrc(card);
               return (
                 <div
                   key={`${card.name}-${idx}`}

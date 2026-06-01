@@ -339,9 +339,11 @@ export interface CardData {
   name: string;
   type: CardType;
   atk: number;
-  effects: { trigger: string; desc: string }[];
+  effects: { trigger: string; desc: string; id?: string }[];
   flags: string[];
   alsoMatches?: string[];
+  /** @deprecated Legacy ARTEFACTO field */
+  artifactType?: "global" | "intercepcion";
   // ── Campos nuevos de CartaMaestra ──
   _cartaMaestra: CartaMaestra;
   raza_tipo: RazaTipo;
@@ -363,8 +365,13 @@ function idToNumber(id: string): number {
   return isNaN(num) ? id.split("").reduce((a, c) => a + c.charCodeAt(0), 0) : num;
 }
 
-/** Mapea MetodoInvocacion al CardType legacy */
-function metodoToCardType(m: MetodoInvocacion): CardType {
+/** Mapea MetodoInvocacion + Atributo al CardType legacy.
+ *  NORMAL → usa el atributo (CELESTIAL/UMBRAL) como tipo visual.
+ *  Los métodos especiales (ANOMALIA, CORRUPCION, ECLIPSE, GENESIS)
+ *  usan su método como tipo para estilizado propio.
+ */
+function metodoToCardType(m: MetodoInvocacion, atributo: Atributo): CardType {
+  if (m === "NORMAL") return atributo as CardType;
   return m as CardType;
 }
 
@@ -394,7 +401,7 @@ export function cartaToCardData(carta: CartaMaestra): CardData {
   return {
     id: idToNumber(carta.id),
     name: carta.nombre,
-    type: metodoToCardType(carta.metodo_invocacion),
+    type: metodoToCardType(carta.metodo_invocacion, carta.atributo),
     atk: carta.atk,
     effects: efectosToLegacy([...carta.efecto_monstruo, ...carta.efecto_altar]),
     flags: generarFlags(carta),
