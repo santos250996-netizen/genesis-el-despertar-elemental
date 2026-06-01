@@ -28,4 +28,9 @@ export const ART_MAP: Record<string, string> = {
   "ART-018": "/cards/tierra_baldia.png",
   "ART-019": "/cards/espada_alba.png",
   "ART-020": "/cards/escudo_umbral.png",
+
+  // ─── NUEVAS MECÁNICAS ───
+  "FUL-021": "/cards/acecho_magmatico.png",
+  "FOS-022": "/cards/bastion_runico.png",
+  "ABI-023": "/cards/hidra_abisal.png",
 };

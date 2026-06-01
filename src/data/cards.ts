@@ -636,6 +636,136 @@ const ARTEFACTO_CARDS: CartaMaestra[] = [
 ];
 
 // ═══════════════════════════════════════════════════════════════
+// NUEVAS MECÁNICAS — 3 CARTAS
+// SUBTERRÁNEO (Boca abajo) · ESCUDO (Contadores) · CORROSIÓN (DoT+Memoria)
+// ═══════════════════════════════════════════════════════════════
+
+const NUEVAS_MECANICAS_CARDS: CartaMaestra[] = [
+
+  // ─── SUBTERRÁNEO: FULGUR + FERA ───
+  // Se juega boca abajo. Inmune a efectos selectivos.
+  // Cuando el enemigo ataca su columna, se voltea y activa su efecto.
+
+  {
+    id: "FUL-021",
+    nombre: "Acecho Magmático",
+    raza_tipo: "FERA",
+    atributo: "FULGUR",
+    metodo_invocacion: "SUBTERRANEO",
+    atk: 14,
+    es_altar: false,
+    contador_escudo: 0,
+    boca_abajo: true,
+    efecto_monstruo: [
+      {
+        trigger: "on_flip",
+        type: "buff_atk",
+        amount: 6,
+        scope: "self",
+        condition: "none",
+        desc: "Al ser volteada por un ataque enemigo, gana +6 ATK y el ataque enemigo se resuelve contra su nuevo ATK.",
+      },
+      {
+        trigger: "on_flip",
+        type: "direct_damage",
+        amount: 4,
+        scope: "opponent_lp",
+        condition: "none",
+        desc: "Al ser volteada, inflige 4 daño directo al LP enemigo.",
+      },
+    ],
+    efecto_altar: [
+      {
+        trigger: "passive",
+        type: "buff_atk",
+        amount: 2,
+        scope: "self_lane",
+        condition: "none",
+        desc: "Los monstruos FULGUR en este carril ganan +2 ATK.",
+        categoria: "PASIVO",
+      },
+    ],
+  },
+
+  // ─── ESCUDO: FOSO + ARTIFEX ───
+  // Tiene contadores_escudo = 2. Si va a ser destruida, consume 1 contador en su lugar.
+
+  {
+    id: "FOS-022",
+    nombre: "Bastión Rúnico",
+    raza_tipo: "ARTIFEX",
+    atributo: "FOSO",
+    metodo_invocacion: "NORMAL",
+    atk: 16,
+    es_altar: false,
+    contador_escudo: 2,
+    efecto_monstruo: [
+      {
+        trigger: "on_summon",
+        type: "add_shield",
+        amount: 1,
+        scope: "self",
+        condition: "none",
+        desc: "Al invocar, gana 1 contador de escudo adicional (máx 3).",
+      },
+      {
+        trigger: "passive",
+        type: "prevent_destroy",
+        scope: "self",
+        condition: "none",
+        desc: "Si este monstruo va a ser destruido, consume 1 contador de escudo en su lugar.",
+      },
+    ],
+    efecto_altar: [
+      {
+        trigger: "on_summon",
+        type: "add_shield",
+        scope: "self_lane",
+        condition: "none",
+        desc: "Cuando un monstruo FOSO es invocado en este carril, gana 1 contador de escudo.",
+        categoria: "PASIVO",
+      },
+    ],
+  },
+
+  // ─── CORROSIÓN: ABIS + MARINA ───
+  // Aplica contadores de corrosión a la columna enemiga. Si el monstruo muere por corrosión,
+  // se marca como infectado. Al ser robado de nuevo, entra con -3 ATK.
+
+  {
+    id: "ABI-023",
+    nombre: "Hidra Abisal",
+    raza_tipo: "MARINA",
+    atributo: "ABIS",
+    metodo_invocacion: "NORMAL",
+    atk: 11,
+    es_altar: false,
+    contador_escudo: 0,
+    efecto_monstruo: [
+      {
+        trigger: "on_attack",
+        type: "corrosion",
+        amount: 1,
+        scope: "enemy_lane",
+        condition: "none",
+        desc: "Al atacar, aplica 1 contador de corrosión al monstruo enemigo en la columna opuesta. Al inicio del turno de su controlador, recibe 2 daño por cada contador.",
+      },
+    ],
+    efecto_altar: [
+      {
+        trigger: "once_per_turn",
+        type: "corrosion",
+        amount: 1,
+        scope: "enemy_lane",
+        condition: "none",
+        desc: "Una vez por turno, aplica 1 contador de corrosión a un monstruo enemigo en el carril opuesto.",
+        categoria: "TURNO",
+      },
+    ],
+  },
+];
+
+// ═══════════════════════════════════════════════════════════════
 // EXPORTACIONES
 // ═══════════════════════════════════════════════════════════════
 
@@ -644,6 +774,7 @@ export const ALL_CARDS_MAESTRA: CartaMaestra[] = [
   ...CELESTIAL_CARDS,
   ...UMBRAL_CARDS,
   ...ARTEFACTO_CARDS,
+  ...NUEVAS_MECANICAS_CARDS,
 ];
 
 /** Mapa de id → CartaMaestra */

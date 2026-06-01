@@ -36,6 +36,11 @@ export function getValidSlots(card: CardData): SlotId[] {
     return ["p-altar-luz", "p-altar-sombra"];
   }
 
+  // SUBTERRÁNEO — se juega boca abajo en cualquier zona de monstruo o altares
+  if (card.flags.includes("isSubterraneo")) {
+    return ["p-mon-1", "p-mon-2", "p-mon-3", "p-altar-luz", "p-altar-sombra"];
+  }
+
   // Todas las cartas son híbridas (monstruo + altar) — pueden ir en CUALQUIER zona de monstruo o altares
   return ["p-mon-1", "p-mon-2", "p-mon-3", "p-altar-luz", "p-altar-sombra"];
 }
@@ -44,11 +49,12 @@ export function getValidSlots(card: CardData): SlotId[] {
  * Classify the type of summon based on card type and target slot.
  * Used to enforce the "1 normal summon per turn" limit.
  */
-export type SummonKind = "normal" | "special" | "altar" | "anomaly" | "artifact";
+export type SummonKind = "normal" | "special" | "altar" | "anomaly" | "artifact" | "subterraneo";
 
 export function classifySummon(card: CardData, slotId: SlotId): SummonKind {
   if (card.type === "ANOMALIA") return "anomaly";
   if (card.type === "ARTEFACTO") return "artifact";
+  if (card.flags.includes("isSubterraneo") && !slotId.includes("altar")) return "subterraneo";
   if (slotId.includes("altar")) return "altar";
   if (card.type === "ECLIPSE" || card.flags.includes("isGenesis")) return "special";
   return "normal";
@@ -132,6 +138,13 @@ export function validatePlacement(
     }
     // Si va al altar, se permite sin requisitos especiales
     return null;
+  }
+
+  // SUBTERRÁNEO: se coloca boca abajo en cualquier zona de monstruo o altar
+  if (card.flags.includes("isSubterraneo")) {
+    if (slotId.includes("altar")) return null; // En altar: normal
+    if (slotId.startsWith("p-mon-")) return null; // Boca abajo en cualquier zona
+    return "Subterráneo solo va en zonas de monstruo o altares.";
   }
 
   // Check if slot is occupied

@@ -30,11 +30,12 @@ export type Atributo =
 
 /** Método de invocación — CÓMO entra la carta al campo */
 export type MetodoInvocacion =
-  | "NORMAL"      // Invocación directa a zona de monstruo
-  | "ANOMALIA"    // Consume un monstruo enemigo
-  | "CORRUPCION"  // Sacrifica un aliado + requiere altar sombra
-  | "ECLIPSE"     // Requiere ambos altares activos
-  | "GENESIS";    // Requiere ambos altares, los consume al invocar
+  | "NORMAL"         // Invocación directa a zona de monstruo
+  | "SUBTERRANEO"    // Boca abajo: inmune a efectos, se voltea al ser atacada
+  | "ANOMALIA"       // Consume un monstruo enemigo
+  | "CORRUPCION"     // Sacrifica un aliado + requiere altar sombra
+  | "ECLIPSE"        // Requiere ambos altares activos
+  | "GENESIS";       // Requiere ambos altares, los consume al invocar
 
 /** Categoría de efecto de altar — paralelo a Magias/Trampas YGO */
 export type CategoriaAltar =
@@ -66,6 +67,7 @@ export type TriggerType =
   | "once_per_turn"     // Una vez por turno (activación manual)
   | "on_consume"        // Al consumir un enemigo (Anomalía)
   | "on_sacrifice"      // Al ser sacrificada (Corrupción)
+  | "on_flip"           // Al ser volteada (Subterráneo: cuando el enemigo ataca)
   | "passive";          // Pasivo: siempre activo mientras está en campo
 
 /** Qué hace el efecto */
@@ -85,7 +87,8 @@ export type EfectoType =
   | "prevent_destroy"    // Prevenir destrucción
   | "atk_diff_damage"    // Daño = diferencia de ATK
   | "penetrate"          // Daño penetrante (ignora monstruo enemigo)
-  | "destroy_column";    // Destruir toda una columna
+  | "destroy_column"     // Destruir toda una columna
+  | "corrosion";         // Aplicar contador de corrosión (DoT con memoria)
 
 /** Quién/es son afectados por el efecto */
 export type ScopeType =
@@ -155,8 +158,14 @@ export interface CartaMaestra {
   atk: number;
   /** Si la carta está en modo altar (Columna 1 o 3, pasiva) */
   es_altar: boolean;
-  /** Escudo: bloquea 1 ataque completo, luego se gasta (máx 1 por carta) */
+  /** Escudo: bloquea 1 ataque completo, luego se gasta */
   contador_escudo: number;
+  /** SUBTERRÁNEO: la carta se juega boca abajo, inmune a efectos selectivos.
+   *  Se voltea cuando el enemigo ataca su columna, activando on_flip. */
+  boca_abajo?: boolean;
+  /** CORROSIÓN: si esta carta fue infectada por corrosión, retorna al mazo
+   *  con infectado=true. Al ser robada e invocada de nuevo, entra con stats reducidas. */
+  infectado?: boolean;
   /** Efecto que se activa cuando la carta lucha en el campo (es_altar = false).
    *  Para artefactos, este es su ÚNICO efecto (campo=global pasivo, equipo=bono al equipado). */
   efecto_monstruo: EfectoDescriptor[];
@@ -318,6 +327,14 @@ export const METODO_INFO: Record<MetodoInvocacion, {
     badge: "bg-fuchsia-900/80 text-fuchsia-100 border border-fuchsia-500/50",
     emoji: "💎",
   },
+  SUBTERRANEO: {
+    label: "Subterráneo",
+    border: "border-amber-700",
+    gradient: "from-amber-900 via-stone-800 to-stone-950",
+    textColor: "text-amber-300",
+    badge: "bg-amber-900/80 text-amber-300 border border-amber-600/50",
+    emoji: "🕳",
+  },
 };
 
 // ═══════════════════════════════════════════════════════════════
@@ -330,7 +347,7 @@ export const METODO_INFO: Record<MetodoInvocacion, {
 /** @deprecated Usar CartaMaestra directamente tras migrar el motor */
 export type CardType =
   | "CELESTIAL" | "UMBRAL" | "FULGUR" | "AURA" | "ABIS" | "FOSO"
-  | "ECLIPSE" | "CORRUPCION" | "ANOMALIA" | "GENESIS"
+  | "ECLIPSE" | "CORRUPCION" | "ANOMALIA" | "GENESIS" | "SUBTERRANEO"
   | "ARTEFACTO";
 
 /** @deprecated Migrar a ATRIBUTO_INFO + METODO_INFO */
@@ -350,6 +367,7 @@ export const CARD_TYPE_INFO: Record<CardType, {
   CORRUPCION:{ label: "Corrupción", border: "border-red-500",      gradient: "from-red-800 to-red-950",         textColor: "text-red-200" },
   ANOMALIA:  { label: "Anomalía",   border: "border-purple-500",   gradient: "from-purple-800 to-purple-950",   textColor: "text-purple-200" },
   GENESIS:   { label: "Génesis",    border: "border-fuchsia-400",  gradient: "from-fuchsia-800 via-purple-900 to-fuchsia-950", textColor: "text-fuchsia-100" },
+  SUBTERRANEO: { label: "Subterráneo", border: "border-amber-700", gradient: "from-amber-900 via-stone-800 to-stone-950", textColor: "text-amber-300" },
   ARTEFACTO: { label: "Artefacto",  border: "border-zinc-500",     gradient: "from-zinc-600 to-zinc-800",       textColor: "text-zinc-400" },
 };
 
@@ -381,6 +399,8 @@ export interface CardData {
   contador_escudo: number;
   efecto_monstruo: EfectoDescriptor[];
   efecto_altar: EfectoDescriptor[];
+  boca_abajo?: boolean;
+  infectado?: boolean;
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -404,6 +424,7 @@ function metodoToCardType(carta: CartaMaestra): CardType {
   const m = carta.metodo_invocacion ?? "NORMAL";
   const atributo = carta.atributo ?? "CELESTIAL";
   if (m === "NORMAL") return atributo as CardType;
+  if (m === "SUBTERRANEO") return "SUBTERRANEO";
   return m as CardType;
 }
 
@@ -415,6 +436,7 @@ function generarFlags(carta: CartaMaestra): string[] {
   if (m === "ECLIPSE") flags.push("isEclipse");
   if (m === "CORRUPCION") flags.push("isCorruption");
   if (m === "ANOMALIA") flags.push("isAnomaly");
+  if (m === "SUBTERRANEO") flags.push("isSubterraneo");
   if (carta.es_altar) flags.push("isAltar");
   if (carta.es_artefacto) {
     flags.push("isArtifact");
@@ -423,6 +445,8 @@ function generarFlags(carta: CartaMaestra): string[] {
     // Las cartas normales que pueden ir a altar también son elementales
     flags.push("isElemental");
   }
+  if (carta.boca_abajo) flags.push("isFaceDown");
+  if (carta.infectado) flags.push("isInfected");
   return flags;
 }
 
@@ -455,6 +479,8 @@ export function cartaToCardData(carta: CartaMaestra): CardData {
     efecto_monstruo: carta.efecto_monstruo,
     efecto_altar: carta.efecto_altar,
     artifactType: carta.artefacto_tipo,
+    boca_abajo: carta.boca_abajo,
+    infectado: carta.infectado,
   };
 }
 
@@ -478,6 +504,10 @@ export interface EffectState {
   shieldCounters: Record<string, number>;
   /** Efectos negados este turno por altar */
   negatedEffects: number;
+  /** CORROSIÓN: contadores de corrosión por slotId (daño por turno) */
+  corrosionCounters: Record<string, number>;
+  /** SUBTERRÁNEO: slots con cartas boca abajo */
+  faceDownSlots: SlotId[];
 }
 
 // ═══════════════════════════════════════════════════════════════

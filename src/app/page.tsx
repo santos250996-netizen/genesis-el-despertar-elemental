@@ -152,7 +152,7 @@ type TargetInfo = { valid: boolean; type: "place" | "sacrifice" | "consume" | "a
 
 function getTargetInfo(slotId: SlotId, card: CardData | null, board: Record<SlotId, CardData | null>, summonedThisTurn: number = 0): TargetInfo {
   if (!card) return { valid: false, type: "place" };
-  const isSpecialSummon = card.type === "ECLIPSE" || card.flags.includes("isGenesis");
+  const isSpecialSummon = card.type === "ECLIPSE" || card.flags.includes("isGenesis") || card.flags.includes("isSubterraneo");
 
   // ARTEFACTO — solo va al slot de artefacto
   if (card.type === "ARTEFACTO" || card.flags.includes("isArtifact")) {
@@ -213,6 +213,18 @@ function getTargetInfo(slotId: SlotId, card: CardData | null, board: Record<Slot
     if (slotId !== "p-mon-2") return { valid: false, type: "place" };
     if (!board["p-altar-luz"] || !board["p-altar-sombra"]) return { valid: false, type: "place" };
     return { valid: true, type: "place" };
+  }
+  // SUBTERRÁNEO: se coloca boca abajo en cualquier zona de monstruo o altar
+  if (card.flags.includes("isSubterraneo")) {
+    if (slotId.includes("altar")) {
+      if (board[slotId as SlotId]) return { valid: false, type: "place" };
+      return { valid: true, type: "place" };
+    }
+    if (slotId.startsWith("p-mon-")) {
+      if (board[slotId as SlotId]) return { valid: false, type: "place" };
+      return { valid: true, type: "place" };
+    }
+    return { valid: false, type: "place" };
   }
   // Column 2: ahora abierta para invocación NORMAL también
   // Slots válidos para invocación normal: TODAS las zonas de monstruo (1,2,3) y altares (luz, sombra)
@@ -1107,6 +1119,7 @@ function GameScreen({ state, onSelectCard, onPlaceCard, onAttackAll, onEndTurn, 
     }
     const c = selectedCard;
     if (c.type === "ANOMALIA") return "🌀 Toca un monstruo enemigo para consumir, o un Altar para efecto altar";
+    if (c.flags.includes("isSubterraneo")) return "🕳 Toca una zona para colocar boca abajo (Subterráneo)";
     if (c.type === "CORRUPCION") return !b["p-altar-sombra"] || !b["p-mon-3"] ? "Necesitas Altar Sombra + monstruo en Z3" : "☣ Toca Zona 3 para sacrificar";
     if (c.type === "ECLIPSE") return !b["p-altar-luz"] || !b["p-altar-sombra"] ? "Necesitas ambos Altares" : "Toca la Zona Central";
     if (c.flags.includes("isGenesis")) return !b["p-altar-luz"] || !b["p-altar-sombra"] ? "Necesitas ambos Altares" : "Toca M2 — consume ambos Altares";

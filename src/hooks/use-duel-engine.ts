@@ -70,6 +70,8 @@ export function useDuelEngine(): UseDuelEngineReturn {
         compensationDrawPending: null,
         shieldCounters: {},
         negatedEffects: 0,
+        corrosionCounters: {},
+        faceDownSlots: [],
       },
       turnNumber: 0,
       attackMode: false,

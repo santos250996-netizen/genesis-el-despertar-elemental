@@ -64,6 +64,8 @@ function emptyEffectState(): EffectState {
     compensationDrawPending: null,
     shieldCounters: {},
     negatedEffects: 0,
+    corrosionCounters: {},
+    faceDownSlots: [],
   };
 }
 
