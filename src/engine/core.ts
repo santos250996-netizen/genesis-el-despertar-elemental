@@ -66,6 +66,10 @@ function emptyEffectState(): EffectState {
     negatedEffects: 0,
     corrosionCounters: {},
     faceDownSlots: [],
+    tempAtkBonus: {},
+    oncePerTurnUsed: [],
+    preventDestroyThisTurn: [],
+    negateDestroyEffectsForSlots: [],
   };
 }
 

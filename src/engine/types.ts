@@ -88,7 +88,9 @@ export type EfectoType =
   | "atk_diff_damage"    // Daño = diferencia de ATK
   | "penetrate"          // Daño penetrante (ignora monstruo enemigo)
   | "destroy_column"     // Destruir toda una columna
-  | "corrosion";         // Aplicar contador de corrosión (DoT con memoria)
+  | "corrosion"          // Aplicar contador de corrosión (DoT con memoria)
+  | "tributo"            // Sacrificar aliado del mismo arquetipo como costo
+  | "saqueo";            // Recompensa al destruir enemigo en batalla
 
 /** Quién/es son afectados por el efecto */
 export type ScopeType =
@@ -102,7 +104,8 @@ export type ScopeType =
   | "self_lp"           // LP propio
   | "enemy_altar"       // Altar enemigo
   | "column"            // Toda una columna (ambos lados)
-  | "graveyard";        // Cementerio / fondo del mazo
+  | "graveyard"         // Cementerio / fondo del mazo
+  | "enemy_deck";       // Mazo del oponente (devolver carta)
 
 /** Condición que debe cumplirse para que el efecto se active */
 export type ConditionType =
@@ -176,6 +179,8 @@ export interface CartaMaestra {
   es_artefacto?: boolean;
   /** Tipo de artefacto: campo (global) o equipo (vinculado a monstruo) */
   artefacto_tipo?: ArtefactoTipo;
+  /** Arquetipo de la carta (TENOTCH, NÓRDICO, etc.) */
+  arquetipo?: string;
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -401,6 +406,8 @@ export interface CardData {
   efecto_altar: EfectoDescriptor[];
   boca_abajo?: boolean;
   infectado?: boolean;
+  /** Arquetipo de la carta (TENOTCH, NÓRDICO, etc.) */
+  arquetipo?: string;
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -489,6 +496,7 @@ export function cartaToCardData(carta: CartaMaestra): CardData {
     artifactType: carta.artefacto_tipo,
     boca_abajo: carta.boca_abajo,
     infectado: carta.infectado,
+    arquetipo: carta.arquetipo,
   };
 }
 
@@ -516,6 +524,14 @@ export interface EffectState {
   corrosionCounters: Record<string, number>;
   /** SUBTERRÁNEO: slots con cartas boca abajo */
   faceDownSlots: SlotId[];
+  /** ATK temporal (solo dura la fase de batalla) */
+  tempAtkBonus: Record<string, number>;
+  /** Slots que ya usaron su efecto "una vez por turno" */
+  oncePerTurnUsed: string[];
+  /** Slots protegidos contra destrucción este turno */
+  preventDestroyThisTurn: string[];
+  /** Slots enemigos cuyos efectos al morir están negados */
+  negateDestroyEffectsForSlots: string[];
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -533,6 +549,13 @@ export interface CardInstance {
 // CARD SCRIPT (hooks por carta, estilo EDOPRO)
 // ═══════════════════════════════════════════════════════════════
 
+export interface PassiveAltarFlags {
+  undestroyable?: boolean;
+  negateEnemyDestroyEffects?: boolean;
+  shieldsDisabled?: boolean;
+  penetrate?: boolean;
+}
+
 export interface CardScript {
   onPlace?: (ctx: DuelContext) => void;
   onRemove?: (ctx: DuelContext) => void;
@@ -540,11 +563,21 @@ export interface CardScript {
   onAttackHit?: (ctx: DuelContext) => void;
   beforeDestroy?: (ctx: DuelContext) => boolean;
   onEnemySummon?: (ctx: DuelContext) => void;
+  onAllySummon?: (ctx: DuelContext, summonedCard: CardData, summonedSlot: SlotId) => void;
   onEnemyDestroy?: (ctx: DuelContext) => void;
   onAllyDestroy?: (ctx: DuelContext) => void;
   onTurnStart?: (ctx: DuelContext) => void;
   onTurnEnd?: (ctx: DuelContext) => void;
   onDraw?: (ctx: DuelContext) => void;
+  // Hooks with extra parameters as scripts use them:
+  onSummon?: (ctx: DuelContext) => void;
+  onConsume?: (ctx: DuelContext, consumedEnemy: CardData) => void;
+  onDestroy?: (ctx: DuelContext) => void;
+  onDestroyEnemy?: (ctx: DuelContext, destroyedEnemy: CardData) => void;
+  onFlip?: (ctx: DuelContext) => void;
+  onEnemyAttack?: (ctx: DuelContext, attackColumn: number) => void;
+  getPassiveAtkBonus?: (ctx: DuelContext, targetCard: CardData, targetSlot: SlotId) => number;
+  getPassiveAltarFlags?: (ctx: DuelContext, targetCard: CardData, targetSlot: SlotId) => PassiveAltarFlags;
 }
 
 // ═══════════════════════════════════════════════════════════════

@@ -38,12 +38,13 @@ export function buildContext(
 export function resolveEvent(
   cardId: number,
   event: keyof CardScript,
-  ctx: DuelContext
+  ctx: DuelContext,
+  ...extraArgs: unknown[]
 ): void {
   const script = getCardScript(cardId);
   const handler = script[event];
   if (typeof handler === "function") {
-    handler(ctx);
+    (handler as (...args: unknown[]) => void)(ctx, ...extraArgs);
   }
 }
 
