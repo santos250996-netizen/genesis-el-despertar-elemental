@@ -146,3 +146,28 @@ Stage Summary:
 - Artefact cards properly display as "Artefacto: Campo" or "Artefacto: Equipo" with no ATK, no attribute, no altar effect
 - Artefact effects correctly labeled as "🌍 Efecto de Campo" or "⚔ Efecto de Equipo"
 - All changes backward compatible — existing engine code continues to work
+
+---
+Task ID: cards-completion
+Agent: Main
+Task: Completar las 55 CartaMaestra definitions + backup de /tmp + actualizar art-map y decks
+
+Work Log:
+- Copiado backup completo de /tmp/my-project/ a /tmp/backup-tmp-project/ (233 src files, configs, etc.)
+- Verificado que /tmp y /home/z tienen contenido idéntico — cards.ts solo tenía 23 cartas en ambos
+- Leídos los 55 scripts de carta para extraer datos (14 TEN + 14 NOR + 4 ART extra)
+- Creadas 32 CartaMaestra definitions faltantes en cards.ts:
+  - TENOTCH (14): TEN-026 a TEN-039 — mecánica Tributo
+  - NÓRDICO (14): NOR-042 a NOR-055 — mecánica Saqueo
+  - ARTEFACTOS (4): ART-040, ART-041, ART-056, ART-057
+- Corregido trigger "on_place" → "on_summon" (TriggerType válido)
+- Actualizado art-map.ts con 32 nuevas rutas de imagen
+- Actualizado decks.ts con mazos TENOTCH (18 cartas) y NÓRDICO (18 cartas)
+- Build exitoso: TypeScript compila, Next.js build pasa sin errores
+
+Stage Summary:
+- cards.ts ahora tiene 55 CartaMaestra definitions completas
+- art-map.ts tiene 55 entradas de imagen
+- decks.ts tiene 3 mazos: BASE (20), TENOTCH (18), NÓRDICO (18)
+- Scripts (155 archivos) ya estaban completos — no necesitaron cambios
+- Backup en /tmp/backup-tmp-project/ preservado para referencia

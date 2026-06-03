@@ -1,8 +1,8 @@
-// ============ MAZO BASE: LUZ Y OSCURIDAD ============
-// 16 cartas de monstruos + 4 artefactos = 20 cartas
-// Atributos CELESTIAL y UMBRAL
-// Distribución: 10 NORMAL, 3 ANOMALÍA, 1 CORRUPCIÓN, 1 ECLIPSE, 1 GÉNESIS + 4 ARTEFACTOS
-// Razas: CELESTIAL → GENS, ÁNIMA, FÁBULA | UMBRAL → NECRO, CLASTO, SECAT
+// ============ GÉNESIS: EL DESPERTAR ELEMENTAL ============
+// 55 cartas totales
+// CELESTIAL (8) + UMBRAL (8) + ARTEFACTO BASE (4) + MECÁNICAS (3) + TENOTCH (14) + NÓRDICO (14) + ARTEFACTO EXTRA (4)
+// Arquetipos: TENOTCH (tributo) · NÓRDICO (saqueo)
+// Razas: GENS, ÁNIMA, FÁBULA, NECRO, CLASTO, SECAT, FERA, MARINA, SATIVA, ARTIFEX
 
 import type { CartaMaestra, CardData } from "@/engine/types";
 import { cartaToCardData } from "@/engine/types";
@@ -766,15 +766,1225 @@ const NUEVAS_MECANICAS_CARDS: CartaMaestra[] = [
 ];
 
 // ═══════════════════════════════════════════════════════════════
+// TENOTCH — 14 CARTAS (Arquetipo: Tributo)
+// Sacrifica un aliado TENOTCH para activar efectos potenciados.
+// Atributos: FULGUR, ABIS, FOSO, AURA, CELESTIAL, UMBRAL
+// ═══════════════════════════════════════════════════════════════
+
+const TENOTCH_CARDS: CartaMaestra[] = [
+
+  // ─── TENOTCH FULGUR (3: GENS GÉNESIS + FERA NORMAL + FERA ANOMALÍA) ───
+
+  {
+    id: "TEN-026",
+    nombre: "Huitzilopochtli",
+    raza_tipo: "GENS",
+    atributo: "FULGUR",
+    metodo_invocacion: "GENESIS",
+    atk: 28,
+    es_altar: false,
+    contador_escudo: 0,
+    arquetipo: "TENOTCH",
+    efecto_monstruo: [
+      {
+        trigger: "on_summon",
+        type: "tributo",
+        amount: 1,
+        scope: "self",
+        condition: "none",
+        desc: "Tributo TENOTCH: sacrifica un aliado TENOTCH → destruye 1 monstruo enemigo.",
+      },
+      {
+        trigger: "on_attack",
+        type: "direct_damage",
+        amount: 3,
+        scope: "opponent_lp",
+        condition: "none",
+        desc: "Al declarar ataque, inflige 3 de daño directo a los LP del oponente.",
+      },
+    ],
+    efecto_altar: [
+      {
+        trigger: "passive",
+        type: "buff_atk",
+        amount: 3,
+        scope: "self_lane",
+        condition: "none",
+        desc: "Los monstruos TENOTCH en esta columna ganan +3 ATK.",
+        categoria: "PASIVO",
+      },
+    ],
+  },
+
+  {
+    id: "TEN-027",
+    nombre: "Guerrero Águila",
+    raza_tipo: "FERA",
+    atributo: "FULGUR",
+    metodo_invocacion: "NORMAL",
+    atk: 14,
+    es_altar: false,
+    contador_escudo: 0,
+    arquetipo: "TENOTCH",
+    efecto_monstruo: [
+      {
+        trigger: "on_attack",
+        type: "tributo",
+        amount: 4,
+        scope: "self",
+        condition: "none",
+        desc: "Tributo TENOTCH: sacrifica un aliado TENOTCH → gana +4 ATK temporal.",
+      },
+    ],
+    efecto_altar: [
+      {
+        trigger: "once_per_turn",
+        type: "buff_atk",
+        amount: 2,
+        scope: "self_lane",
+        condition: "none",
+        desc: "Una vez por turno, los monstruos FULGUR en este carril ganan +2 ATK.",
+        categoria: "TURNO",
+      },
+    ],
+  },
+
+  {
+    id: "TEN-028",
+    nombre: "Xiuhcóatl",
+    raza_tipo: "FERA",
+    atributo: "FULGUR",
+    metodo_invocacion: "ANOMALIA",
+    atk: 18,
+    es_altar: false,
+    contador_escudo: 0,
+    arquetipo: "TENOTCH",
+    efecto_monstruo: [
+      {
+        trigger: "on_consume",
+        type: "tributo",
+        amount: 6,
+        scope: "opponent_lp",
+        condition: "none",
+        desc: "Tributo TENOTCH: sacrifica un aliado TENOTCH → inflige 6 de daño directo al oponente.",
+      },
+    ],
+    efecto_altar: [
+      {
+        trigger: "on_destroy_enemy",
+        type: "direct_damage",
+        amount: 2,
+        scope: "opponent_lp",
+        condition: "none",
+        desc: "Cuando un enemigo es destruido en el carril opuesto, inflige 2 de daño directo al oponente.",
+        categoria: "PASIVO",
+      },
+    ],
+  },
+
+  // ─── TENOTCH ABIS (3: MARINA ECLIPSE + MARINA SUBTERRÁNEO + SATIVA NORMAL) ───
+
+  {
+    id: "TEN-029",
+    nombre: "Tlaloc",
+    raza_tipo: "MARINA",
+    atributo: "ABIS",
+    metodo_invocacion: "ECLIPSE",
+    atk: 24,
+    es_altar: false,
+    contador_escudo: 0,
+    arquetipo: "TENOTCH",
+    efecto_monstruo: [
+      {
+        trigger: "on_summon",
+        type: "tributo",
+        amount: 1,
+        scope: "all_enemies",
+        condition: "none",
+        desc: "Tributo TENOTCH: sacrifica un aliado TENOTCH → aplica corrosión a todos los monstruos enemigos.",
+      },
+      {
+        trigger: "on_turn_start",
+        type: "corrosion",
+        amount: 2,
+        scope: "enemy_lane",
+        condition: "none",
+        desc: "Al inicio del turno, inflige 2 de daño por cada contador de corrosión al monstruo enemigo opuesto.",
+      },
+    ],
+    efecto_altar: [
+      {
+        trigger: "passive",
+        type: "debuff_atk",
+        amount: 2,
+        scope: "enemy_lane",
+        condition: "none",
+        desc: "Los monstruos enemigos en el carril opuesto pierden 2 ATK.",
+        categoria: "PASIVO",
+      },
+    ],
+  },
+
+  {
+    id: "TEN-030",
+    nombre: "Ahuizotl",
+    raza_tipo: "MARINA",
+    atributo: "ABIS",
+    metodo_invocacion: "SUBTERRANEO",
+    atk: 12,
+    es_altar: false,
+    contador_escudo: 0,
+    boca_abajo: true,
+    arquetipo: "TENOTCH",
+    efecto_monstruo: [
+      {
+        trigger: "on_flip",
+        type: "tributo",
+        amount: 1,
+        scope: "self_lp",
+        condition: "none",
+        desc: "Tributo TENOTCH: sacrifica un aliado TENOTCH → roba 1 carta e inflige 3 de daño directo.",
+      },
+    ],
+    efecto_altar: [
+      {
+        trigger: "on_summon",
+        type: "add_shield",
+        amount: 1,
+        scope: "self_lane",
+        condition: "none",
+        desc: "Cuando un monstruo ABIS es invocado en este carril, gana 1 contador de escudo.",
+        categoria: "PASIVO",
+      },
+    ],
+  },
+
+  {
+    id: "TEN-031",
+    nombre: "Chalchiuhtlicue",
+    raza_tipo: "SATIVA",
+    atributo: "ABIS",
+    metodo_invocacion: "NORMAL",
+    atk: 10,
+    es_altar: false,
+    contador_escudo: 0,
+    arquetipo: "TENOTCH",
+    efecto_monstruo: [
+      {
+        trigger: "on_summon",
+        type: "tributo",
+        amount: 1,
+        scope: "target",
+        condition: "none",
+        desc: "Tributo TENOTCH: sacrifica un aliado TENOTCH → da 1 escudo a un monstruo TENOTCH. Si no hay tributo, gana 3 LP.",
+      },
+    ],
+    efecto_altar: [
+      {
+        trigger: "once_per_turn",
+        type: "lp_gain",
+        amount: 2,
+        scope: "self_lp",
+        condition: "none",
+        desc: "Una vez por turno, si controlas un monstruo ABIS en este carril, ganas 2 LP.",
+        categoria: "TURNO",
+      },
+    ],
+  },
+
+  // ─── TENOTCH FOSO (2: CLASTO CORRUPCIÓN + ARTIFEX NORMAL) ───
+
+  {
+    id: "TEN-032",
+    nombre: "Cipactli",
+    raza_tipo: "CLASTO",
+    atributo: "FOSO",
+    metodo_invocacion: "CORRUPCION",
+    atk: 20,
+    es_altar: false,
+    contador_escudo: 0,
+    arquetipo: "TENOTCH",
+    efecto_monstruo: [
+      {
+        trigger: "on_summon",
+        type: "tributo",
+        amount: 1,
+        scope: "enemy_lane",
+        condition: "none",
+        desc: "Tributo TENOTCH: sacrifica un aliado TENOTCH → aplica corrosión al monstruo enemigo opuesto.",
+      },
+      {
+        trigger: "on_attack",
+        type: "debuff_atk",
+        amount: 2,
+        scope: "enemy_lane",
+        condition: "none",
+        desc: "Al declarar ataque, el monstruo enemigo en la columna opuesta pierde 2 ATK permanentemente.",
+      },
+    ],
+    efecto_altar: [
+      {
+        trigger: "passive",
+        type: "debuff_atk",
+        amount: 1,
+        scope: "all_enemies",
+        condition: "none",
+        desc: "Todos los monstruos enemigos pierden 1 ATK.",
+        categoria: "PASIVO",
+      },
+    ],
+  },
+
+  {
+    id: "TEN-033",
+    nombre: "Coatlicue",
+    raza_tipo: "ARTIFEX",
+    atributo: "FOSO",
+    metodo_invocacion: "NORMAL",
+    atk: 16,
+    es_altar: false,
+    contador_escudo: 2,
+    arquetipo: "TENOTCH",
+    efecto_monstruo: [
+      {
+        trigger: "on_summon",
+        type: "add_shield",
+        amount: 1,
+        scope: "self",
+        condition: "none",
+        desc: "Al ser invocada, gana 1 contador de escudo adicional.",
+      },
+      {
+        trigger: "passive",
+        type: "prevent_destroy",
+        scope: "self",
+        condition: "none",
+        desc: "Si tiene contadores de escudo, consume 1 escudo y previene la destrucción.",
+      },
+      {
+        trigger: "on_summon",
+        type: "tributo",
+        amount: 1,
+        scope: "self_lane",
+        condition: "none",
+        desc: "Tributo TENOTCH: sacrifica un aliado TENOTCH → da 1 escudo a todos los monstruos TENOTCH en este carril.",
+      },
+    ],
+    efecto_altar: [
+      {
+        trigger: "on_summon",
+        type: "add_shield",
+        amount: 1,
+        scope: "self_lane",
+        condition: "none",
+        desc: "Cuando un monstruo FOSO es invocado en este carril, gana 1 contador de escudo.",
+        categoria: "PASIVO",
+      },
+    ],
+  },
+
+  // ─── TENOTCH AURA (3: FÁBULA GÉNESIS + FÁBULA NORMAL + ÁNIMA ANOMALÍA) ───
+
+  {
+    id: "TEN-034",
+    nombre: "Quetzalcóatl",
+    raza_tipo: "FABULA",
+    atributo: "AURA",
+    metodo_invocacion: "GENESIS",
+    atk: 26,
+    es_altar: false,
+    contador_escudo: 0,
+    arquetipo: "TENOTCH",
+    efecto_monstruo: [
+      {
+        trigger: "on_summon",
+        type: "tributo",
+        amount: 2,
+        scope: "self_lp",
+        condition: "none",
+        desc: "Tributo TENOTCH: sacrifica un aliado TENOTCH → roba 2 cartas.",
+      },
+      {
+        trigger: "on_turn_start",
+        type: "buff_atk",
+        amount: 2,
+        scope: "all_allies",
+        condition: "none",
+        desc: "Al inicio del turno, todos los monstruos TENOTCH ganan +2 ATK permanente.",
+      },
+    ],
+    efecto_altar: [
+      {
+        trigger: "passive",
+        type: "buff_atk",
+        amount: 2,
+        scope: "self_lane",
+        condition: "none",
+        desc: "Los monstruos AURA en esta columna ganan +2 ATK.",
+        categoria: "PASIVO",
+      },
+    ],
+  },
+
+  {
+    id: "TEN-035",
+    nombre: "Ehécatl",
+    raza_tipo: "FABULA",
+    atributo: "AURA",
+    metodo_invocacion: "NORMAL",
+    atk: 12,
+    es_altar: false,
+    contador_escudo: 0,
+    arquetipo: "TENOTCH",
+    efecto_monstruo: [
+      {
+        trigger: "on_summon",
+        type: "tributo",
+        amount: 1,
+        scope: "enemy_deck",
+        condition: "none",
+        desc: "Tributo TENOTCH: sacrifica un aliado TENOTCH → devuelve 1 monstruo enemigo a su mazo.",
+      },
+    ],
+    efecto_altar: [
+      {
+        trigger: "once_per_turn",
+        type: "move",
+        scope: "self_lane",
+        condition: "none",
+        desc: "Una vez por turno, puedes mover un monstruo entre carriles.",
+        categoria: "TURNO",
+      },
+    ],
+  },
+
+  {
+    id: "TEN-036",
+    nombre: "Tzitzimimeh",
+    raza_tipo: "ANIMA",
+    atributo: "AURA",
+    metodo_invocacion: "ANOMALIA",
+    atk: 16,
+    es_altar: false,
+    contador_escudo: 0,
+    arquetipo: "TENOTCH",
+    efecto_monstruo: [
+      {
+        trigger: "on_summon",
+        type: "tributo",
+        amount: 3,
+        scope: "all_enemies",
+        condition: "none",
+        desc: "Tributo TENOTCH: sacrifica un aliado TENOTCH → todos los monstruos enemigos pierden 3 ATK.",
+      },
+    ],
+    efecto_altar: [
+      {
+        trigger: "on_enemy_attack",
+        type: "debuff_atk",
+        amount: 2,
+        scope: "enemy_lane",
+        condition: "none",
+        desc: "Cuando un enemigo ataca en este carril, ese enemigo pierde 2 ATK permanente.",
+        categoria: "RESPUESTA",
+        respuesta_trigger: "enemy_attack",
+      },
+    ],
+  },
+
+  // ─── TENOTCH CELESTIAL (2: GENS ECLIPSE + SATIVA NORMAL) ───
+
+  {
+    id: "TEN-037",
+    nombre: "Tonatiuh",
+    raza_tipo: "GENS",
+    atributo: "CELESTIAL",
+    metodo_invocacion: "ECLIPSE",
+    atk: 22,
+    es_altar: false,
+    contador_escudo: 0,
+    arquetipo: "TENOTCH",
+    efecto_monstruo: [
+      {
+        trigger: "on_summon",
+        type: "tributo",
+        amount: 5,
+        scope: "self",
+        condition: "none",
+        desc: "Tributo TENOTCH: sacrifica un aliado TENOTCH → gana +5 ATK y previene su destrucción este turno.",
+      },
+      {
+        trigger: "on_attack",
+        type: "buff_atk",
+        amount: 3,
+        scope: "self",
+        condition: "none",
+        desc: "Al atacar, gana +3 ATK.",
+      },
+    ],
+    efecto_altar: [
+      {
+        trigger: "once_per_turn",
+        type: "buff_atk",
+        amount: 3,
+        scope: "self_lane",
+        condition: "none",
+        desc: "Una vez por turno, un monstruo CELESTIAL en este carril gana +3 ATK.",
+        categoria: "TURNO",
+      },
+    ],
+  },
+
+  {
+    id: "TEN-038",
+    nombre: "Centeotl",
+    raza_tipo: "SATIVA",
+    atributo: "CELESTIAL",
+    metodo_invocacion: "NORMAL",
+    atk: 10,
+    es_altar: false,
+    contador_escudo: 0,
+    arquetipo: "TENOTCH",
+    efecto_monstruo: [
+      {
+        trigger: "on_summon",
+        type: "tributo",
+        amount: 1,
+        scope: "graveyard",
+        condition: "none",
+        desc: "Tributo TENOTCH: sacrifica un aliado TENOTCH → recupera 1 carta TENOTCH del mazo.",
+      },
+      {
+        trigger: "on_destroy",
+        type: "draw",
+        amount: 1,
+        scope: "self_lp",
+        condition: "none",
+        desc: "Al ser destruida, roba 1 carta.",
+      },
+    ],
+    efecto_altar: [
+      {
+        trigger: "on_turn_start",
+        type: "lp_gain",
+        amount: 1,
+        scope: "self_lp",
+        condition: "none",
+        desc: "Al inicio de tu turno, ganas 1 LP por cada monstruo TENOTCH en este carril.",
+        categoria: "PASIVO",
+      },
+    ],
+  },
+
+  // ─── TENOTCH UMBRAL (1: NECRO CORRUPCIÓN) ───
+
+  {
+    id: "TEN-039",
+    nombre: "Mictlantecuhtli",
+    raza_tipo: "NECRO",
+    atributo: "UMBRAL",
+    metodo_invocacion: "CORRUPCION",
+    atk: 24,
+    es_altar: false,
+    contador_escudo: 0,
+    arquetipo: "TENOTCH",
+    efecto_monstruo: [
+      {
+        trigger: "on_summon",
+        type: "tributo",
+        amount: 1,
+        scope: "all_enemies",
+        condition: "none",
+        desc: "Tributo TENOTCH: sacrifica un aliado TENOTCH → aplica corrosión a todos los monstruos enemigos.",
+      },
+      {
+        trigger: "on_destroy_enemy",
+        type: "direct_damage",
+        amount: 3,
+        scope: "opponent_lp",
+        condition: "none",
+        desc: "Al destruir un monstruo enemigo, inflige 3 puntos de daño directo al LP del oponente.",
+      },
+    ],
+    efecto_altar: [
+      {
+        trigger: "passive",
+        type: "debuff_atk",
+        amount: 2,
+        scope: "all_enemies",
+        condition: "none",
+        desc: "Todos los monstruos enemigos pierden 2 ATK.",
+        categoria: "PASIVO",
+      },
+    ],
+  },
+];
+
+// ═══════════════════════════════════════════════════════════════
+// NÓRDICO — 14 CARTAS (Arquetipo: Saqueo)
+// Al destruir un monstruo enemigo en batalla, activa efectos de recompensa.
+// Atributos: FULGUR, ABIS, FOSO, AURA, CELESTIAL, UMBRAL
+// ═══════════════════════════════════════════════════════════════
+
+const NORDICO_CARDS: CartaMaestra[] = [
+
+  // ─── NÓRDICO FULGUR (3: GENS GÉNESIS + FERA NORMAL + FERA ANOMALÍA) ───
+
+  {
+    id: "NOR-042",
+    nombre: "Thor",
+    raza_tipo: "GENS",
+    atributo: "FULGUR",
+    metodo_invocacion: "GENESIS",
+    atk: 28,
+    es_altar: false,
+    contador_escudo: 0,
+    arquetipo: "NORDICO",
+    efecto_monstruo: [
+      {
+        trigger: "on_destroy_enemy",
+        type: "saqueo",
+        scope: "all_enemies",
+        condition: "none",
+        desc: "Saqueo: Al destruir un monstruo enemigo, destruye TODOS los monstruos enemigos con ATK menor al de esta carta.",
+      },
+      {
+        trigger: "on_attack",
+        type: "direct_damage",
+        amount: 3,
+        scope: "opponent_lp",
+        condition: "none",
+        desc: "Al declarar ataque, inflige 3 daño directo a los LP del oponente.",
+      },
+    ],
+    efecto_altar: [
+      {
+        trigger: "passive",
+        type: "buff_atk",
+        amount: 3,
+        scope: "self_lane",
+        condition: "none",
+        desc: "Los monstruos NÓRDICO en este carril ganan +3 ATK.",
+        categoria: "PASIVO",
+      },
+    ],
+  },
+
+  {
+    id: "NOR-043",
+    nombre: "Berserker Ígneo",
+    raza_tipo: "FERA",
+    atributo: "FULGUR",
+    metodo_invocacion: "NORMAL",
+    atk: 14,
+    es_altar: false,
+    contador_escudo: 0,
+    arquetipo: "NORDICO",
+    efecto_monstruo: [
+      {
+        trigger: "on_destroy_enemy",
+        type: "saqueo",
+        amount: 4,
+        scope: "self",
+        condition: "none",
+        desc: "Saqueo: Al destruir un monstruo enemigo, gana +4 ATK permanente.",
+      },
+    ],
+    efecto_altar: [
+      {
+        trigger: "once_per_turn",
+        type: "buff_atk",
+        amount: 2,
+        scope: "self_lane",
+        condition: "none",
+        desc: "Una vez por turno, los monstruos FULGUR en este carril ganan +2 ATK.",
+        categoria: "TURNO",
+      },
+    ],
+  },
+
+  {
+    id: "NOR-044",
+    nombre: "Surtr",
+    raza_tipo: "FERA",
+    atributo: "FULGUR",
+    metodo_invocacion: "ANOMALIA",
+    atk: 18,
+    es_altar: false,
+    contador_escudo: 0,
+    arquetipo: "NORDICO",
+    efecto_monstruo: [
+      {
+        trigger: "on_destroy_enemy",
+        type: "saqueo",
+        amount: 5,
+        scope: "opponent_lp",
+        condition: "none",
+        desc: "Saqueo: Al destruir un monstruo enemigo, inflige 5 daño directo a los LP del oponente.",
+      },
+    ],
+    efecto_altar: [
+      {
+        trigger: "on_destroy_enemy",
+        type: "direct_damage",
+        amount: 2,
+        scope: "opponent_lp",
+        condition: "none",
+        desc: "Cuando un enemigo es destruido en el carril opuesto, inflige 2 daño directo.",
+        categoria: "PASIVO",
+      },
+    ],
+  },
+
+  // ─── NÓRDICO ABIS (3: MARINA ECLIPSE + MARINA SUBTERRÁNEO + SATIVA NORMAL) ───
+
+  {
+    id: "NOR-045",
+    nombre: "Jormungandr",
+    raza_tipo: "MARINA",
+    atributo: "ABIS",
+    metodo_invocacion: "ECLIPSE",
+    atk: 24,
+    es_altar: false,
+    contador_escudo: 0,
+    arquetipo: "NORDICO",
+    efecto_monstruo: [
+      {
+        trigger: "on_destroy_enemy",
+        type: "saqueo",
+        amount: 1,
+        scope: "all_enemies",
+        condition: "none",
+        desc: "Saqueo: Al destruir un monstruo enemigo, aplica corrosión a todas las columnas enemigas.",
+      },
+      {
+        trigger: "on_turn_start",
+        type: "corrosion",
+        amount: 2,
+        scope: "all_enemies",
+        condition: "none",
+        desc: "Al inicio del turno, inflige daño por corrosión a los monstruos enemigos: 2 daño por cada contador.",
+      },
+    ],
+    efecto_altar: [
+      {
+        trigger: "passive",
+        type: "debuff_atk",
+        amount: 2,
+        scope: "enemy_lane",
+        condition: "none",
+        desc: "Los monstruos enemigos en el carril opuesto pierden 2 ATK.",
+        categoria: "PASIVO",
+      },
+    ],
+  },
+
+  {
+    id: "NOR-046",
+    nombre: "Kraken",
+    raza_tipo: "MARINA",
+    atributo: "ABIS",
+    metodo_invocacion: "SUBTERRANEO",
+    atk: 12,
+    es_altar: false,
+    contador_escudo: 0,
+    boca_abajo: true,
+    arquetipo: "NORDICO",
+    efecto_monstruo: [
+      {
+        trigger: "on_destroy_enemy",
+        type: "saqueo",
+        amount: 2,
+        scope: "self_lp",
+        condition: "none",
+        desc: "Saqueo: Al destruir un monstruo enemigo, roba 2 cartas.",
+      },
+      {
+        trigger: "on_flip",
+        type: "direct_damage",
+        amount: 4,
+        scope: "opponent_lp",
+        condition: "none",
+        desc: "Al ser volteada, inflige 4 daño directo a los LP del oponente.",
+      },
+    ],
+    efecto_altar: [
+      {
+        trigger: "on_summon",
+        type: "add_shield",
+        amount: 1,
+        scope: "self_lane",
+        condition: "none",
+        desc: "Cuando un monstruo ABIS es invocado en este carril, gana 1 contador de escudo.",
+        categoria: "PASIVO",
+      },
+    ],
+  },
+
+  {
+    id: "NOR-047",
+    nombre: "Aegir",
+    raza_tipo: "SATIVA",
+    atributo: "ABIS",
+    metodo_invocacion: "NORMAL",
+    atk: 10,
+    es_altar: false,
+    contador_escudo: 0,
+    arquetipo: "NORDICO",
+    efecto_monstruo: [
+      {
+        trigger: "on_destroy_enemy",
+        type: "saqueo",
+        amount: 5,
+        scope: "self_lp",
+        condition: "none",
+        desc: "Saqueo: Al destruir un monstruo enemigo, recupera 5 LP.",
+      },
+      {
+        trigger: "on_summon",
+        type: "lp_gain",
+        amount: 2,
+        scope: "self_lp",
+        condition: "none",
+        desc: "Al ser colocada, ganas 2 LP.",
+      },
+    ],
+    efecto_altar: [
+      {
+        trigger: "once_per_turn",
+        type: "lp_gain",
+        amount: 2,
+        scope: "self_lp",
+        condition: "none",
+        desc: "Una vez por turno, si controlas un monstruo ABIS en este carril, ganas 2 LP.",
+        categoria: "TURNO",
+      },
+    ],
+  },
+
+  // ─── NÓRDICO FOSO (2: CLASTO CORRUPCIÓN + ARTIFEX NORMAL) ───
+
+  {
+    id: "NOR-048",
+    nombre: "Ymir",
+    raza_tipo: "CLASTO",
+    atributo: "FOSO",
+    metodo_invocacion: "CORRUPCION",
+    atk: 20,
+    es_altar: false,
+    contador_escudo: 0,
+    arquetipo: "NORDICO",
+    efecto_monstruo: [
+      {
+        trigger: "on_destroy_enemy",
+        type: "saqueo",
+        amount: 1,
+        scope: "self",
+        condition: "none",
+        desc: "Saqueo: Al destruir un monstruo enemigo, invoca 1 monstruo NÓRDICO del mazo al campo.",
+      },
+      {
+        trigger: "on_attack",
+        type: "debuff_atk",
+        amount: 2,
+        scope: "enemy_lane",
+        condition: "none",
+        desc: "Al declarar ataque, el monstruo enemigo opuesto pierde 2 ATK permanente.",
+      },
+    ],
+    efecto_altar: [
+      {
+        trigger: "passive",
+        type: "debuff_atk",
+        amount: 1,
+        scope: "all_enemies",
+        condition: "none",
+        desc: "Todos los monstruos enemigos pierden 1 ATK.",
+        categoria: "PASIVO",
+      },
+    ],
+  },
+
+  {
+    id: "NOR-049",
+    nombre: "Enano Forjador",
+    raza_tipo: "ARTIFEX",
+    atributo: "FOSO",
+    metodo_invocacion: "NORMAL",
+    atk: 16,
+    es_altar: false,
+    contador_escudo: 1,
+    arquetipo: "NORDICO",
+    efecto_monstruo: [
+      {
+        trigger: "on_summon",
+        type: "add_shield",
+        amount: 1,
+        scope: "self",
+        condition: "none",
+        desc: "Al ser invocado, gana 1 contador de escudo adicional.",
+      },
+      {
+        trigger: "passive",
+        type: "prevent_destroy",
+        scope: "self",
+        condition: "none",
+        desc: "Si tiene contadores de escudo, consume 1 escudo y previene la destrucción.",
+      },
+      {
+        trigger: "on_destroy_enemy",
+        type: "saqueo",
+        amount: 1,
+        scope: "self_lp",
+        condition: "none",
+        desc: "Saqueo: Al destruir un monstruo enemigo, roba 1 carta.",
+      },
+    ],
+    efecto_altar: [
+      {
+        trigger: "on_summon",
+        type: "add_shield",
+        amount: 1,
+        scope: "self_lane",
+        condition: "none",
+        desc: "Cuando un monstruo FOSO es invocado en este carril, gana 1 contador de escudo.",
+        categoria: "PASIVO",
+      },
+    ],
+  },
+
+  // ─── NÓRDICO AURA (3: FÁBULA GÉNESIS + FÁBULA NORMAL + ÁNIMA ANOMALÍA) ───
+
+  {
+    id: "NOR-050",
+    nombre: "Odin",
+    raza_tipo: "FABULA",
+    atributo: "AURA",
+    metodo_invocacion: "GENESIS",
+    atk: 26,
+    es_altar: false,
+    contador_escudo: 0,
+    arquetipo: "NORDICO",
+    efecto_monstruo: [
+      {
+        trigger: "on_destroy_enemy",
+        type: "saqueo",
+        amount: 3,
+        scope: "self_lp",
+        condition: "none",
+        desc: "Saqueo: Al destruir un monstruo enemigo, roba 3 cartas.",
+      },
+      {
+        trigger: "on_turn_start",
+        type: "buff_atk",
+        amount: 2,
+        scope: "all_allies",
+        condition: "none",
+        desc: "Al inicio del turno, todos los monstruos NÓRDICO ganan +2 ATK.",
+      },
+    ],
+    efecto_altar: [
+      {
+        trigger: "passive",
+        type: "buff_atk",
+        amount: 2,
+        scope: "self_lane",
+        condition: "none",
+        desc: "Los monstruos AURA en este carril ganan +2 ATK.",
+        categoria: "PASIVO",
+      },
+    ],
+  },
+
+  {
+    id: "NOR-051",
+    nombre: "Valquiria",
+    raza_tipo: "FABULA",
+    atributo: "AURA",
+    metodo_invocacion: "NORMAL",
+    atk: 12,
+    es_altar: false,
+    contador_escudo: 0,
+    arquetipo: "NORDICO",
+    efecto_monstruo: [
+      {
+        trigger: "on_destroy_enemy",
+        type: "saqueo",
+        amount: 2,
+        scope: "target",
+        condition: "none",
+        desc: "Saqueo: Al destruir un monstruo enemigo, da 2 contadores de escudo a un monstruo aliado NÓRDICO.",
+      },
+    ],
+    efecto_altar: [
+      {
+        trigger: "once_per_turn",
+        type: "add_shield",
+        amount: 1,
+        scope: "self_lane",
+        condition: "none",
+        desc: "Una vez por turno, 1 monstruo en este carril gana 1 contador de escudo.",
+        categoria: "TURNO",
+      },
+    ],
+  },
+
+  {
+    id: "NOR-052",
+    nombre: "Huginn & Muninn",
+    raza_tipo: "ANIMA",
+    atributo: "AURA",
+    metodo_invocacion: "ANOMALIA",
+    atk: 16,
+    es_altar: false,
+    contador_escudo: 0,
+    arquetipo: "NORDICO",
+    efecto_monstruo: [
+      {
+        trigger: "on_destroy_enemy",
+        type: "saqueo",
+        scope: "enemy_lane",
+        condition: "none",
+        desc: "Saqueo: Al destruir un monstruo enemigo, niega el siguiente efecto enemigo este turno.",
+      },
+    ],
+    efecto_altar: [
+      {
+        trigger: "on_enemy_attack",
+        type: "debuff_atk",
+        amount: 2,
+        scope: "enemy_lane",
+        condition: "none",
+        desc: "Cuando un enemigo ataca en este carril, ese enemigo pierde 2 ATK permanente.",
+        categoria: "RESPUESTA",
+        respuesta_trigger: "enemy_attack",
+      },
+    ],
+  },
+
+  // ─── NÓRDICO CELESTIAL (2: GENS ECLIPSE + SATIVA NORMAL) ───
+
+  {
+    id: "NOR-053",
+    nombre: "Heimdall",
+    raza_tipo: "GENS",
+    atributo: "CELESTIAL",
+    metodo_invocacion: "ECLIPSE",
+    atk: 22,
+    es_altar: false,
+    contador_escudo: 0,
+    arquetipo: "NORDICO",
+    efecto_monstruo: [
+      {
+        trigger: "on_destroy_enemy",
+        type: "saqueo",
+        scope: "all_allies",
+        condition: "none",
+        desc: "Saqueo: Al destruir un monstruo enemigo, previene la destrucción de todos los aliados este turno.",
+      },
+      {
+        trigger: "on_attack",
+        type: "buff_atk",
+        amount: 3,
+        scope: "self",
+        condition: "none",
+        desc: "Al atacar, gana +3 ATK.",
+      },
+    ],
+    efecto_altar: [
+      {
+        trigger: "once_per_turn",
+        type: "buff_atk",
+        amount: 3,
+        scope: "self_lane",
+        condition: "none",
+        desc: "Una vez por turno, un monstruo CELESTIAL en este carril gana +3 ATK.",
+        categoria: "TURNO",
+      },
+    ],
+  },
+
+  {
+    id: "NOR-054",
+    nombre: "Freya",
+    raza_tipo: "SATIVA",
+    atributo: "CELESTIAL",
+    metodo_invocacion: "NORMAL",
+    atk: 10,
+    es_altar: false,
+    contador_escudo: 0,
+    arquetipo: "NORDICO",
+    efecto_monstruo: [
+      {
+        trigger: "on_destroy_enemy",
+        type: "saqueo",
+        amount: 1,
+        scope: "graveyard",
+        condition: "none",
+        desc: "Saqueo: Al destruir un monstruo enemigo, recupera 1 carta NÓRDICO del mazo.",
+      },
+      {
+        trigger: "on_summon",
+        type: "lp_gain",
+        amount: 3,
+        scope: "self_lp",
+        condition: "none",
+        desc: "Al ser colocada, ganas 3 LP.",
+      },
+    ],
+    efecto_altar: [
+      {
+        trigger: "on_turn_start",
+        type: "lp_gain",
+        amount: 1,
+        scope: "self_lp",
+        condition: "none",
+        desc: "Al inicio de tu turno, ganas 1 LP por cada monstruo NÓRDICO en este carril.",
+        categoria: "PASIVO",
+      },
+    ],
+  },
+
+  // ─── NÓRDICO UMBRAL (1: NECRO CORRUPCIÓN) ───
+
+  {
+    id: "NOR-055",
+    nombre: "Hel",
+    raza_tipo: "NECRO",
+    atributo: "UMBRAL",
+    metodo_invocacion: "CORRUPCION",
+    atk: 24,
+    es_altar: false,
+    contador_escudo: 0,
+    arquetipo: "NORDICO",
+    efecto_monstruo: [
+      {
+        trigger: "on_destroy_enemy",
+        type: "saqueo",
+        amount: 3,
+        scope: "opponent_lp",
+        condition: "none",
+        desc: "Saqueo: Al destruir un monstruo enemigo, roba el monstruo destruido a tu campo e inflige 3 daño directo.",
+      },
+    ],
+    efecto_altar: [
+      {
+        trigger: "passive",
+        type: "debuff_atk",
+        amount: 2,
+        scope: "all_enemies",
+        condition: "none",
+        desc: "TODOS los monstruos enemigos pierden 2 ATK.",
+        categoria: "PASIVO",
+      },
+    ],
+  },
+];
+
+// ═══════════════════════════════════════════════════════════════
+// ARTEFACTOS EXTRA — 4 CARTAS (2 TENOTCH + 2 NÓRDICO)
+// ═══════════════════════════════════════════════════════════════
+
+const ARTEFACTO_EXTRA_CARDS: CartaMaestra[] = [
+
+  // ─── TENOTCH ARTEFACTOS ───
+
+  {
+    id: "ART-040",
+    nombre: "Templo Mayor",
+    atk: 0,
+    es_altar: false,
+    es_artefacto: true,
+    artefacto_tipo: "campo",
+    contador_escudo: 0,
+    arquetipo: "TENOTCH",
+    efecto_monstruo: [{
+      trigger: "passive",
+      type: "draw",
+      amount: 1,
+      scope: "self_lp",
+      condition: "none",
+      desc: "Cuando una carta TENOTCH es sacrificada por Tributo, roba 1 carta.",
+    }],
+    efecto_altar: [],
+  },
+
+  {
+    id: "ART-041",
+    nombre: "Piedra del Sol",
+    atk: 0,
+    es_altar: false,
+    es_artefacto: true,
+    artefacto_tipo: "equipo",
+    contador_escudo: 0,
+    arquetipo: "TENOTCH",
+    efecto_monstruo: [{
+      trigger: "passive",
+      type: "buff_atk",
+      amount: 3,
+      scope: "self",
+      condition: "none",
+      desc: "El monstruo equipado gana +3 ATK por cada carta TENOTCH en el campo.",
+    }],
+    efecto_altar: [],
+  },
+
+  // ─── NÓRDICO ARTEFACTOS ───
+
+  {
+    id: "ART-056",
+    nombre: "Drakkar",
+    atk: 0,
+    es_altar: false,
+    es_artefacto: true,
+    artefacto_tipo: "campo",
+    contador_escudo: 0,
+    arquetipo: "NORDICO",
+    efecto_monstruo: [{
+      trigger: "passive",
+      type: "buff_atk",
+      amount: 1,
+      scope: "all_allies",
+      condition: "none",
+      desc: "Todos los monstruos NÓRDICO ganan +1 ATK.",
+    }],
+    efecto_altar: [],
+  },
+
+  {
+    id: "ART-057",
+    nombre: "Mjolnir",
+    atk: 0,
+    es_altar: false,
+    es_artefacto: true,
+    artefacto_tipo: "equipo",
+    contador_escudo: 0,
+    arquetipo: "NORDICO",
+    efecto_monstruo: [{
+      trigger: "passive",
+      type: "buff_atk",
+      amount: 5,
+      scope: "self",
+      condition: "none",
+      desc: "El monstruo equipado gana +5 ATK. Si el equipado es NÓRDICO, permite doble ataque.",
+    }],
+    efecto_altar: [],
+  },
+];
+
+// ═══════════════════════════════════════════════════════════════
 // EXPORTACIONES
 // ═══════════════════════════════════════════════════════════════
 
-/** Todas las cartas del mazo base en formato CartaMaestra */
+/** Todas las cartas del juego en formato CartaMaestra */
 export const ALL_CARDS_MAESTRA: CartaMaestra[] = [
   ...CELESTIAL_CARDS,
   ...UMBRAL_CARDS,
   ...ARTEFACTO_CARDS,
   ...NUEVAS_MECANICAS_CARDS,
+  ...TENOTCH_CARDS,
+  ...NORDICO_CARDS,
+  ...ARTEFACTO_EXTRA_CARDS,
 ];
 
 /** Mapa de id → CartaMaestra */
